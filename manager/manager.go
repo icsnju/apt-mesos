@@ -44,11 +44,11 @@ func (manager *Manager) GetAllTasks() ([]*Task, error) {
 	manager.RLock()
 	defer manager.RUnlock()
 
-	i := 1
+	var i = 0
 	result := make([]*Task, len(manager.tasks))
 
-	for _, task := range manager.tasks {
-		result[i] = task
+	for _, v := range manager.tasks {
+		result[i] = v
 		i++
 	}
 

@@ -3,7 +3,7 @@ package test
 import (
 	"testing"
 	"fmt"
-	"github.com/JetMuffin/sher/manager"
+	"github.com/icsnju/apt-mesos/manager"
 )
 
 func TestManager(t *testing.T) {

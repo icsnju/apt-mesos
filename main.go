@@ -5,15 +5,13 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"flag"
 	"strings"
-	"os"
+	// "os"
 
-	. "github.com/JetMuffin/sher/scheduler"
-	. "github.com/JetMuffin/sher/server"
-	log "github.com/golang/glog"
-	global "github.com/JetMuffin/sher/global"
+	"github.com/icsnju/apt-mesos/server"
+	global "github.com/icsnju/apt-mesos/global"
 	mesos "github.com/mesos/mesos-go/mesosproto"
 	util "github.com/mesos/mesos-go/mesosutil"
-	sched "github.com/mesos/mesos-go/scheduler"
+	// sched "github.com/mesos/mesos-go/scheduler"
 )
 
 const (
@@ -30,44 +28,43 @@ func main() {
 
 	// Start HTTP server
 	fmt.Printf("HTTP Server run on %v\n", global.Address)
-	server := NewHttpServer(global.Address, global.WorkDir)
-	server.Listen()
+	server.ListenAndServe(global.Address)
 
-	// Executor
-	executorUri := fmt.Sprintf("http://%s/%s", global.Address, global.ExecutorPath)
-	exec := prepareExecutorInfo(executorUri)
+	// // Executor
+	// executorUri := fmt.Sprintf("http://%s/%s", global.Address, global.ExecutorPath)
+	// exec := prepareExecutorInfo(executorUri)
 
-	// Scheduler
-	scheduler, err := NewMesosScheduler(exec, CPUS_PER_TASK, MEM_PER_TASK)
-	if err != nil {
-		log.Fatalf("Failed to create scheduler with error: %v\n", err)
-		os.Exit(-2)
-	}
+	// // Scheduler
+	// scheduler, err := NewMesosScheduler(exec, CPUS_PER_TASK, MEM_PER_TASK)
+	// if err != nil {
+	// 	log.Fatalf("Failed to create scheduler with error: %v\n", err)
+	// 	os.Exit(-2)
+	// }
 
-	// Framework
-	frameworkInfo := &mesos.FrameworkInfo{
-		User: proto.String(""),
-		Name: proto.String("Mesos Test Framework"),
-	}
+	// // Framework
+	// frameworkInfo := &mesos.FrameworkInfo{
+	// 	User: proto.String(""),
+	// 	Name: proto.String("Mesos Test Framework"),
+	// }
 
-	// Scheduler Driver
-	config := sched.DriverConfig{
-		Scheduler: scheduler,
-		Framework: frameworkInfo,
-		Master:    global.Master,
-	}
+	// // Scheduler Driver
+	// config := sched.DriverConfig{
+	// 	Scheduler: scheduler,
+	// 	Framework: frameworkInfo,
+	// 	Master:    global.Master,
+	// }
 
-	driver, err := sched.NewMesosSchedulerDriver(config)
+	// driver, err := sched.NewMesosSchedulerDriver(config)
 
-	if err != nil {
-		log.Fatalf("Unable to create a SchedulerDriver: %v\n", err)
-		os.Exit(-3)
-	}
+	// if err != nil {
+	// 	log.Fatalf("Unable to create a SchedulerDriver: %v\n", err)
+	// 	os.Exit(-3)
+	// }
 
-	if stat, err := driver.Run(); err != nil {
-		log.Fatalf("Framework stopped with status %s and error %s\n", stat.String(), err.Error())
-		os.Exit(-4)
-	}	
+	// if stat, err := driver.Run(); err != nil {
+	// 	log.Fatalf("Framework stopped with status %s and error %s\n", stat.String(), err.Error())
+	// 	os.Exit(-4)
+	// }	
 }
 
 func prepareExecutorInfo(uri string) *mesos.ExecutorInfo {

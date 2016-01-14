@@ -1,25 +1,23 @@
 package manager
 
 import (
-	"github.com/JetMuffin/sher/mesosproto"
+	"github.com/icsnju/apt-mesos/mesosproto"
 )
 type Task struct {
-	ID          	string   		`json:"id"`
-	DockerImage 	string   		`json:"docker_image"`
-	Command     	string   		`json:"cmd"`
-	Cpus        	float64  		`json:"cpus,string"`
-	Disk        	float64  		`json:"disk,string"`
-	Mem         	float64  		`json:"mem,string"`
-	Volumes			Volume 			`json:"volumes,omitempty"`
-	Arguments     	[]string  		`json:"arguments,omitempty"`
-	Ports			Port 			`json:"ports,omitempty"`
+	ID          	string   				`json:"id"`
+	DockerImage 	string   				`json:"docker_image"`
+	Command     	string   				`json:"cmd"`
+	Cpus        	float64  				`json:"cpus,string"`
+	Disk        	float64  				`json:"disk,string"`
+	Mem         	float64  				`json:"mem,string"`
+	Arguments     	[]string  				`json:"arguments,omitempty"`
+	State         	*mesosproto.TaskState 	`json:"state,string"`
 
 	DockerID		string
 	DockerName		string
 	SlaveID     	string
 	CreatedTime     int64
 	TaskInfo		*mesosproto.TaskInfo
-	Running			bool
 }
 
 func TestTask(id string) *Task {

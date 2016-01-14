@@ -10,12 +10,15 @@ import (
     "sync"
 
     "github.com/Unknwon/goconfig"
+    "github.com/Sirupsen/logrus"
 )
 
 var Master			string 		// Mesos master address
 var Address 		string		// Binding address for artifact server
 var ExecutorPath	string 		// Path of executor binary file
 var WorkDir			string		// Path of workspace direction
+
+var Logger          *logrus.Logger // Log
 
 var once sync.Once
 
@@ -86,9 +89,11 @@ func getIPAutomaticly() (a string, e error) {
 
 func init() {
     once.Do(func() {
+        Logger := logrus.New()
+
     	err := loadConfig("config.ini")
         if err != nil {
-            fmt.Fprintf(os.Stderr, err.Error())
+            Logger.Fatal(err)
             os.Exit(1)
         }
     })

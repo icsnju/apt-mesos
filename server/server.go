@@ -1,114 +1,41 @@
 package server
 
 import (
-	"fmt"
-	"io"
-	"net/http"
-	"os"
-	"strings"
+    "net/http"
 
-	log "github.com/golang/glog"
+
+	"github.com/go-martini/martini"
+	"github.com/icsnju/apt-mesos/api"
+	"github.com/icsnju/apt-mesos/manager"
 )
 
-type HttpPathMapping struct {
-	HttpPath string
-	FilePath string
-}
+const (
+	PORT = ":3030"
+)
 
-func uploadHandler(w http.ResponseWriter, r *http.Request) {
-	file, header, err := r.FormFile("image")
-	fileName := r.FormValue("name")
+func recovery() martini.Handler {
+	return func(w http.ResponseWriter, ctx martini.Context) {
+		defer func() {
+			if err := recover(); err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+			}
+		}()
 
-	if err != nil {
-		log.Infof("Failed to handle upload request with error: %v\n", err)
-	}
-	defer file.Close()
-
-	out, err := os.Create(fmt.Sprintf("/vagrant/%s", fileName))
-
-	if err != nil {
-		fmt.Fprintf(w, "Unable to create the file for writing. Check your write access privilege")
-		return
-	}
-	defer out.Close()
-
-	// Write the content from POST to the file
-	_, err = io.Copy(out, file)
-	if err != nil {
-		log.Infoln(w, err)
-	}
-
-	fmt.Fprintf(w, "File uploaded successfully : ")
-	fmt.Fprintf(w, header.Filename)
-}
-
-func registerUploadHandler() {
-	http.HandleFunc("/", uploadHandler)
-}
-
-func registerDownloadHandler(fileToServe HttpPathMapping) {
-	log.Infof("httpPath: %v\n", fileToServe.HttpPath)
-	log.Infof("filePath: %v\n", fileToServe.FilePath)
-
-	http.HandleFunc(fileToServe.HttpPath, func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, fileToServe.FilePath)
-	})
-}
-
-func registerDownloadHandlers(filesToServe []HttpPathMapping) {
-	for _, m := range filesToServe {
-		registerDownloadHandler(m)
+		ctx.Next()
 	}
 }
 
-func GetHttpPath(path string) string {
-	// Create base path (http://foobar:5000/<base>)
-	pathSplit := strings.Split(path, "/")
-	var base string
-	if len(pathSplit) > 0 {
-		base = pathSplit[len(pathSplit)-1]
-	} else {
-		base = path
-	}
+func ListenAndServe(addr string) {
+	m := martini.Classic()
+    m.Use(recovery())
+    m.Use(martini.Static("static"))
+    
+	apis := api.NewAPI(manager.NewManager())
 
-	return "/" + base
-}
-
-func GetDefaultMappings(filePaths []string) []HttpPathMapping {
-	mappings := []HttpPathMapping{}
-
-	for _, f := range filePaths {
-		m := HttpPathMapping{
-			HttpPath: GetHttpPath(f),
-			FilePath: f,
-		}
-
-		mappings = append(mappings, m)
-	}
-
-	return mappings
-}
-
-func StartHttpServer(address string, filesToServe []HttpPathMapping) {
-	registerDownloadHandlers(filesToServe)
-	registerUploadHandler()
-	go http.ListenAndServe(address, nil)
-}
-
-// start 
-type HttpServer struct {
-	address string
-	workDir string
-}
-
-func NewHttpServer(address string, workDir string) *HttpServer {
-	return &HttpServer{
-		address: address,
-		workDir: workDir,
-	}
-}
-
-func (server *HttpServer) Listen() {
-	http.Handle("/", http.FileServer(http.Dir(server.workDir)))
-	go http.ListenAndServe(server.address, nil)
+    m.Get("/api/handshake", apis.Handshake())
+    m.Get("/api/tasks", apis.ListTasks())
+    m.Post("/api/tasks", apis.AddTask())
+    m.Delete("/api/tasks/:id", apis.DeleteTask())
+    
+    m.RunOnAddr(PORT)
 }
