@@ -37,5 +37,5 @@ func ListenAndServe(addr string, registry *registry.Registry) {
     m.Post("/api/tasks", apis.AddTask())
     m.Delete("/api/tasks/:id", apis.DeleteTask())
     
-    m.RunOnAddr(PORT)
+    m.RunOnAddr(addr)
 }
