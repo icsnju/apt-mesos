@@ -5,11 +5,10 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
-	// "fmt"
 
 	"github.com/icsnju/apt-mesos/mesosproto"
 	"github.com/go-martini/martini"
-	"github.com/icsnju/apt-mesos/manager"
+	"github.com/icsnju/apt-mesos/registry"
 )
 
 var (
@@ -17,12 +16,12 @@ var (
 )
 
 type API struct {
-	manager  *manager.Manager
+	registry  *registry.Registry
 }
 
-func NewAPI(manager *manager.Manager) *API{
+func NewAPI(registry *registry.Registry) *API{
 	return &API{
-		manager: manager,
+		registry: registry,
 	}
 }
 
@@ -52,7 +51,7 @@ func (api *API) ListTasks() martini.Handler {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var result Result
 
-		tasks, err := api.manager.GetAllTasks()
+		tasks, err := api.registry.GetAllTasks()
 
 		if err != nil {
 			writeError(w, err)
@@ -74,7 +73,7 @@ path:		/api/tasks
 func (api *API) AddTask() martini.Handler {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var result Result
-		task := &manager.Task{State: &defaultState}
+		task := &registry.Task{State: &defaultState}
 
 		if err := json.NewDecoder(r.Body).Decode(&task); err != nil {
 			writeError(w, err)
@@ -90,7 +89,7 @@ func (api *API) AddTask() martini.Handler {
 		}
 		task.ID = hex.EncodeToString(id)
 
-		err = api.manager.AddTask(task.ID, task)
+		err = api.registry.AddTask(task.ID, task)
 		if err != nil {
 			writeError(w, err)
 			return
@@ -115,7 +114,7 @@ func (api *API) DeleteTask() martini.Handler {
 		id := params["id"]
 
 		// TODO killTask
-		if err := api.manager.DeleteTask(id); err != nil {
+		if err := api.registry.DeleteTask(id); err != nil {
 			writeError(w, err)
 			return
 		}

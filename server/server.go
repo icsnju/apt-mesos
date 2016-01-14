@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-martini/martini"
 	"github.com/icsnju/apt-mesos/api"
-	"github.com/icsnju/apt-mesos/manager"
+	"github.com/icsnju/apt-mesos/registry"
 )
 
 const (
@@ -25,12 +25,12 @@ func recovery() martini.Handler {
 	}
 }
 
-func ListenAndServe(addr string) {
+func ListenAndServe(addr string, registry *registry.Registry) {
 	m := martini.Classic()
     m.Use(recovery())
     m.Use(martini.Static("static"))
     
-	apis := api.NewAPI(manager.NewManager())
+	apis := api.NewAPI(registry)
 
     m.Get("/api/handshake", apis.Handshake())
     m.Get("/api/tasks", apis.ListTasks())

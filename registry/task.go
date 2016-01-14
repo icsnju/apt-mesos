@@ -1,4 +1,4 @@
-package manager
+package registry
 
 import (
 	"github.com/icsnju/apt-mesos/mesosproto"
