@@ -4,7 +4,7 @@ import (
 	"fmt"
 	
 	"github.com/golang/protobuf/proto"
-	"github.com/icsnju/apt-mesos/mesosproto"
+	"github.com/mesos/mesos-go/mesosproto"
 )
 type Volume struct {
 	ContainerPath string `json:"container_path,omitempty"`

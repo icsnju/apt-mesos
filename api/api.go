@@ -6,9 +6,10 @@ import (
 	"encoding/hex"
 	"encoding/json"
 
-	"github.com/icsnju/apt-mesos/mesosproto"
+	"github.com/mesos/mesos-go/mesosproto"
 	"github.com/go-martini/martini"
 	"github.com/icsnju/apt-mesos/registry"
+	"github.com/icsnju/apt-mesos/core"
 )
 
 var (
@@ -16,12 +17,14 @@ var (
 )
 
 type API struct {
-	registry  *registry.Registry
+	registry 	*registry.Registry
+	core		*core.Core
 }
 
-func NewAPI(registry *registry.Registry) *API{
+func NewAPI(core *core.Core, registry *registry.Registry) *API{
 	return &API{
-		registry: registry,
+		core:		core,
+		registry: 	registry,
 	}
 }
 

@@ -1,29 +1,45 @@
 package main
 
 import (
-	"fmt"
 	"flag"
-
+	
+	"github.com/Sirupsen/logrus"
+	"github.com/mesos/mesos-go/mesosproto"
 	"github.com/icsnju/apt-mesos/server"
 	"github.com/icsnju/apt-mesos/registry"
-	global "github.com/icsnju/apt-mesos/global"
+	"github.com/icsnju/apt-mesos/core"
 )
 
-const (
-	CPUS_PER_TASK = 1
-	MEM_PER_TASK  = 128
-	defaultArtifactPort = 8000
+var (
+	addr 		string
+	master		string
+
+	frameworkName 	= "apt-mesos"
+	user			= ""
+	log				= logrus.New()
 )
 
 func init() {
+	flag.StringVar(&addr, "addr", "127.0.0.1:3030", "Address to listen on <ip:port>")
+	flag.StringVar(&master, "master", "127.0.0.1:5050", "Master to connect to <ip:port>")
 	flag.Parse()
 }
 
 func main() {
-	r := registry.NewRegistry()
+	// create frameworkInfo
+	frameworkInfo := &mesosproto.FrameworkInfo{Name: &frameworkName, User: &user}
+	
+	// create registry
+	registry := registry.NewRegistry()
+	
+	// start a new core
+	core := core.NewCore(addr, master, frameworkInfo, log)
 
 	// Start HTTP server
-	fmt.Printf("HTTP Server run on %v\n", global.Address)
-	server.ListenAndServe(global.Address, r)
+	log.Infof("HTTP Server run on %s", addr)
+	go server.ListenAndServe(addr, registry, core)
+
+	exit := make(chan bool)
+	<-exit
 }
 

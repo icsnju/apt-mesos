@@ -8,16 +8,25 @@ import (
 	"bytes"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/Sirupsen/logrus"
 	"github.com/bitly/go-simplejson"
 	
 	"github.com/icsnju/apt-mesos/registry"
 	"github.com/icsnju/apt-mesos/server"
+	"github.com/mesos/mesos-go/mesosproto"
+	"github.com/icsnju/apt-mesos/core"
 	. "github.com/icsnju/apt-mesos/registry"
 )
 
 func init() {
+	frameworkName := "api-mesos test" 
+	user := "tester" 
+	frameworkInfo := &mesosproto.FrameworkInfo{Name: &frameworkName, User: &user}
 	r := registry.NewRegistry()
-	go server.ListenAndServe(":3000", r)	
+	log	:= logrus.New()
+	c := core.NewCore("127.0.0.1:3000", "127.0.0.1:5050", frameworkInfo, log)	
+
+	go server.ListenAndServe(":3000", r, c)	
 }
 
 func TestHandshake(t *testing.T) {

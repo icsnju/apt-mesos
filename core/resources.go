@@ -1,7 +1,8 @@
 package core
 
 import (
-	"github.com/icsnju/apt-mesos/mesosproto"
+	"github.com/mesos/mesos-go/mesosutil"
+	"github.com/mesos/mesos-go/mesosproto"
 )
 
 func createScalarResource(name string, value float64) *mesosproto.Resource {
@@ -29,5 +30,16 @@ func BuildResources(cpus, mem, disk float64) []*mesosproto.Resource {
 	}
 
 	return resources
+}
+
+func ScalarResource(name string, resources []*mesosproto.Resource) float64 {
+	scalarResources := mesosutil.FilterResources(resources, func(res *mesosproto.Resource) bool {
+		return res.GetType() == mesosproto.Value_SCALAR && res.GetName() == name
+	})
+	sum := 0.0
+	for _, res := range scalarResources {
+		sum += res.GetScalar().GetValue()
+	}
+	return sum
 }
 
