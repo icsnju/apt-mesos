@@ -49,6 +49,7 @@ func (core *Core) InitEndpoints() {
 		"POST": {
 			"/core/mesos.internal.FrameworkRegisteredMessage": core.FrameworkRegisteredMessage,
 			"/core/mesos.internal.ResourceOffersMessage": core.ResourceOffersMessage,
+			"/core/mesos.internal.StatusUpdateMessage": core.StatusUpdateMessage,
 		},
 	}
 }
@@ -98,6 +99,40 @@ func (core *Core) ResourceOffersMessage(w http.ResponseWriter, r *http.Request) 
 			Offers: message.Offers,
 		},
 	})
+	w.WriteHeader(http.StatusOK)
+	return nil
+}
+
+func (core *Core) StatusUpdateMessage(w http.ResponseWriter, r *http.Request) error {
+	defer r.Body.Close()
+    data, err:= ioutil.ReadAll(r.Body)
+	if err != nil {
+		return err
+	}
+
+	message := new(mesosproto.StatusUpdateMessage)
+	if err := proto.Unmarshal(data, message); err != nil {
+		return err
+	}
+
+	if err := core.SendMessageToMesos(&mesosproto.StatusUpdateAcknowledgementMessage{
+		FrameworkId: core.frameworkInfo.Id,
+		SlaveId:     message.Update.Status.SlaveId,
+		TaskId:      message.Update.Status.TaskId,
+		Uuid:        message.Update.Uuid,
+	}, "mesos.internal.StatusUpdateAcknowledgementMessage"); err != nil {
+		return err
+	}
+
+	eventType := mesosproto.Event_UPDATE
+	core.AddEvent(eventType, &mesosproto.Event{
+		Type: &eventType,
+		Update: &mesosproto.Event_Update{
+			Uuid:   message.Update.Uuid,
+			Status: message.Update.Status,
+		},
+	})
+
 	w.WriteHeader(http.StatusOK)
 	return nil
 }

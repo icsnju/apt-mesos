@@ -36,9 +36,24 @@ func TestRegisterFramework(t *testing.T) {
 	assert.NotNil(t, event)
 }
 
-func TestRequestOffers(t *testing.T) {
+func TestLaunchTask(t *testing.T) {
+	commands := make([]string, 1)
+	commands[0] = "echo hello"
+	task := &core.Task{
+		ID: 		"1",
+		Command: 	commands,
+		Image:   	"mini",
+		Volumes: 	nil,
+	}
 	resources := c.BuildResources(1, 16, 10)
-	_, err := c.RequestOffers(resources)
+	offers, err := c.RequestOffers(resources)
+	assert.NoError(t, err)
+	err = c.LaunchTask(offers[0], resources, task)
+	assert.NoError(t, err)
+}
+
+func TestKillTask(t *testing.T) {
+	err := c.KillTask("1")
 	assert.NoError(t, err)
 }
 

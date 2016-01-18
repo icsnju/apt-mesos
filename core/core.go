@@ -32,8 +32,7 @@ func NewCore(addr string, master string, frameworkInfo *mesosproto.FrameworkInfo
 	return core
 }
 
-
-// framework register to mesos master
+// Framework register to mesos master
 func (core *Core) RegisterFramework() error {
 	core.log.WithFields(logrus.Fields{"master": core.master}).Info("Registering framework...")
 
@@ -77,4 +76,32 @@ func (core *Core) RequestOffers(resources []*mesosproto.Resource) ([]*mesosproto
 
 	core.log.Infof("Received %d offer(s).", len(event.Offers.Offers))
 	return event.Offers.Offers, nil	
+}
+
+// LauchTask with specific offer and resources
+func (core *Core) LaunchTask(offer *mesosproto.Offer, resources []*mesosproto.Resource, task *Task) error {
+	core.log.WithFields(logrus.Fields{"ID": task.ID, "command": task.Command, "offerId": offer.Id, "dockerImage": task.Image}).Info("Launching task...")
+
+	taskInfo := createTaskInfo(offer, resources, task)
+
+	return core.SendMessageToMesos(&mesosproto.LaunchTasksMessage{
+		FrameworkId: core.frameworkInfo.Id,
+		Tasks:       []*mesosproto.TaskInfo{taskInfo},
+		OfferIds: []*mesosproto.OfferID{
+			offer.Id,
+		},
+		Filters: &mesosproto.Filters{},
+	}, "mesos.internal.LaunchTasksMessage")
+}
+
+// Kill task with id
+func (core *Core) KillTask(ID string) error {
+	core.log.WithFields(logrus.Fields{"ID": ID}).Info("Killing task...")
+
+	return core.SendMessageToMesos(&mesosproto.KillTaskMessage{
+		FrameworkId: core.frameworkInfo.Id,
+		TaskId: &mesosproto.TaskID{
+			Value: &ID,
+		},
+	}, "mesos.internal.KillTaskMessage")
 }
