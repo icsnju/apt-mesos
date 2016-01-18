@@ -83,7 +83,7 @@ func (api *API) AddTask() martini.Handler {
 			return
 		}
 
-		//generate task id
+		// generate task id
 		id := make([]byte, 6)
 		n, err := rand.Read(id)
 		if n != len(id) || err != nil {
@@ -98,6 +98,28 @@ func (api *API) AddTask() martini.Handler {
 			return
 		}
 
+		// request for offers
+		resources := api.core.BuildResources(task.Cpus, task.Mem, task.Disk)
+		offers, err := api.core.RequestOffers(resources)
+		if err != nil {
+			writeError(w, err)
+			return
+		}
+
+		// schedule task
+		offer, err := api.core.ScheduleTask(offers, resources, task)
+		if err != nil {
+			writeError(w, err)
+			return
+		}
+
+		// lauch task
+		err = api.core.LaunchTask(offer, resources, task)
+		if err != nil {
+			writeError(w, err)
+			return
+		}
+		
 		result.Success = true
 		result.Result = task.ID
 		result.Response(w)

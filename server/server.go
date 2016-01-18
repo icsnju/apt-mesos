@@ -9,6 +9,12 @@ import (
 	"github.com/icsnju/apt-mesos/core"
 )
 
+func logger() martini.Handler {
+    return func(res http.ResponseWriter, req *http.Request, ctx martini.Context) {
+        ctx.Next()
+    }
+}
+
 func recovery() martini.Handler {
 	return func(w http.ResponseWriter, ctx martini.Context) {
 		defer func() {
@@ -53,7 +59,8 @@ func ListenAndServe(addr string, registry *registry.Registry, core *core.Core) {
 	apis := api.NewAPI(core, registry)
 	r := createRouter(core, apis)
 
-	m := martini.Classic()
+	m := martini.New()
+    m.Use(logger())
     m.Use(recovery())
     m.Use(martini.Static("static"))
 	m.Action(r.Handle)

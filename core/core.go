@@ -79,8 +79,8 @@ func (core *Core) RequestOffers(resources []*mesosproto.Resource) ([]*mesosproto
 }
 
 // LauchTask with specific offer and resources
-func (core *Core) LaunchTask(offer *mesosproto.Offer, resources []*mesosproto.Resource, task *Task) error {
-	core.log.WithFields(logrus.Fields{"ID": task.ID, "command": task.Command, "offerId": offer.Id, "dockerImage": task.Image}).Info("Launching task...")
+func (core *Core) LaunchTask(offer *mesosproto.Offer, resources []*mesosproto.Resource, task *registry.Task) error {
+	core.log.WithFields(logrus.Fields{"ID": task.ID, "command": task.Command, "offerId": offer.Id, "dockerImage": task.DockerImage}).Info("Launching task...")
 
 	taskInfo := createTaskInfo(offer, resources, task)
 

@@ -2,24 +2,14 @@ package core
 
 import (
 	"fmt"
+	"strings"
 	
 	"github.com/golang/protobuf/proto"
 	"github.com/icsnju/apt-mesos/mesosproto"
+	"github.com/icsnju/apt-mesos/registry"
 )
-type Volume struct {
-	ContainerPath string `json:"container_path,omitempty"`
-	HostPath      string `json:"host_path,omitempty"`
-	Mode          string `json:"mode,omitempty"`
-}
 
-type Task struct {
-	ID      string
-	Command []string
-	Image   string
-	Volumes []*Volume
-}
-
-func createTaskInfo(offer *mesosproto.Offer, resources []*mesosproto.Resource, task *Task) *mesosproto.TaskInfo {
+func createTaskInfo(offer *mesosproto.Offer, resources []*mesosproto.Resource, task *registry.Task) *mesosproto.TaskInfo {
 	taskInfo := mesosproto.TaskInfo{
 		Name: proto.String(fmt.Sprintf("volt-task-%s", task.ID)),
 		TaskId: &mesosproto.TaskID{
@@ -31,21 +21,22 @@ func createTaskInfo(offer *mesosproto.Offer, resources []*mesosproto.Resource, t
 	}
 
 	// Set value only if provided
-	if task.Command[0] != "" {
-		taskInfo.Command.Value = &task.Command[0]
+	commands := strings.Split(task.Command, " ")
+	if commands[0] != "" {
+		taskInfo.Command.Value = &commands[0]
 	}
 
 	// Set args only if they exist
-	if len(task.Command) > 1 {
-		taskInfo.Command.Arguments = task.Command[1:]
+	if len(commands) > 1 {
+		taskInfo.Command.Arguments = commands[1:]
 	}
-
+	
 	// Set the docker image if specified
-	if task.Image != "" {
+	if task.DockerImage != "" {
 		taskInfo.Container = &mesosproto.ContainerInfo{
 			Type: mesosproto.ContainerInfo_DOCKER.Enum(),
 			Docker: &mesosproto.ContainerInfo_DockerInfo{
-				Image: &task.Image,
+				Image: &task.DockerImage,
 			},
 		}
 

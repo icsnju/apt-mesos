@@ -12,6 +12,7 @@ type Task struct {
 	Mem         	float64  				`json:"mem,string"`
 	Arguments     	[]string  				`json:"arguments,omitempty"`
 	State         	*mesosproto.TaskState 	`json:"state,string"`
+	Volumes         []*Volume    		    `json:"volumes,omitempty"`
 
 	DockerID		string
 	DockerName		string

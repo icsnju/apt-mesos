@@ -15,7 +15,7 @@ var (
 	master		string
 
 	frameworkName 	= "apt-mesos"
-	user			= ""
+	user			= "vagrant"
 	log				= logrus.New()
 )
 
@@ -26,6 +26,8 @@ func init() {
 }
 
 func main() {
+	log.Level = logrus.DebugLevel
+
 	// create frameworkInfo
 	frameworkInfo := &mesosproto.FrameworkInfo{Name: &frameworkName, User: &user}
 	
@@ -38,6 +40,11 @@ func main() {
 	// Start HTTP server
 	log.Infof("HTTP Server run on %s", addr)
 	server.ListenAndServe(addr, registry, core)
+
+	// try to register framework to master
+	if err := core.RegisterFramework(); err != nil {
+		log.Fatal(err)
+	}
 
 	exit := make(chan bool)
 	<-exit

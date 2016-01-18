@@ -37,13 +37,12 @@ func TestRegisterFramework(t *testing.T) {
 }
 
 func TestLaunchTask(t *testing.T) {
-	commands := make([]string, 1)
-	commands[0] = "echo hello"
-	task := &core.Task{
-		ID: 		"1",
-		Command: 	commands,
-		Image:   	"mini",
-		Volumes: 	nil,
+	commands := "echo hello"
+	task := &registry.Task{
+		ID: 			"1",
+		Command: 		commands,
+		DockerImage:   	"mini",
+		Volumes: 		nil,
 	}
 	resources := c.BuildResources(1, 16, 10)
 	offers, err := c.RequestOffers(resources)
