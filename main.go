@@ -4,7 +4,7 @@ import (
 	"flag"
 	
 	"github.com/Sirupsen/logrus"
-	"github.com/mesos/mesos-go/mesosproto"
+	"github.com/icsnju/apt-mesos/mesosproto"
 	"github.com/icsnju/apt-mesos/server"
 	"github.com/icsnju/apt-mesos/registry"
 	"github.com/icsnju/apt-mesos/core"
@@ -37,7 +37,7 @@ func main() {
 
 	// Start HTTP server
 	log.Infof("HTTP Server run on %s", addr)
-	go server.ListenAndServe(addr, registry, core)
+	server.ListenAndServe(addr, registry, core)
 
 	exit := make(chan bool)
 	<-exit

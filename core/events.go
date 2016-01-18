@@ -4,13 +4,14 @@ import (
 	"fmt"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/mesos/mesos-go/mesosproto"
+	"github.com/icsnju/apt-mesos/mesosproto"
 )
 
 type Events map[mesosproto.Event_Type]chan *mesosproto.Event
 
 func NewEvents() Events {
 	return Events{
+		mesosproto.Event_REGISTERED: 	 make(chan *mesosproto.Event, 64),
 		mesosproto.Event_FAILURE: 	 make(chan *mesosproto.Event, 64),
 		mesosproto.Event_OFFERS:     make(chan *mesosproto.Event, 64),
 		mesosproto.Event_UPDATE:     make(chan *mesosproto.Event, 64),

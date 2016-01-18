@@ -1,7 +1,7 @@
 package registry
 
 import (
-	"github.com/mesos/mesos-go/mesosproto"
+	"github.com/icsnju/apt-mesos/mesosproto"
 )
 type Task struct {
 	ID          	string   				`json:"id"`

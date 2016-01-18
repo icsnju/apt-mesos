@@ -5,7 +5,7 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
-	"github.com/mesos/mesos-go/mesosproto"
+	"github.com/icsnju/apt-mesos/mesosproto"
     "github.com/icsnju/apt-mesos/core"
 )
 

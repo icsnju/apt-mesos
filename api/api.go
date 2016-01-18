@@ -6,8 +6,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 
-	"github.com/mesos/mesos-go/mesosproto"
 	"github.com/go-martini/martini"
+	"github.com/icsnju/apt-mesos/mesosproto"
 	"github.com/icsnju/apt-mesos/registry"
 	"github.com/icsnju/apt-mesos/core"
 )

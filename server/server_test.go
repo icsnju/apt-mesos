@@ -13,7 +13,7 @@ import (
 	
 	"github.com/icsnju/apt-mesos/registry"
 	"github.com/icsnju/apt-mesos/server"
-	"github.com/mesos/mesos-go/mesosproto"
+	"github.com/icsnju/apt-mesos/mesosproto"
 	"github.com/icsnju/apt-mesos/core"
 	. "github.com/icsnju/apt-mesos/registry"
 )
