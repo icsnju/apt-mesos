@@ -21,19 +21,19 @@ Other features will be added in later versions.
 
 ## Installation
 
-### Build Mesos cluster
-
-```
-$ cd vagrant
-$ vagrant up
-```
-
 ### Compile source code
 
 ```
 $ go get github.com/icsnju/apt-mesos
 $ cd $GOPATH/src/github.com/icsnju/apt-mesos
 $ go build
+```
+
+### Build Mesos cluster
+
+```
+$ cd vagrant
+$ vagrant up
 ```
 
 ## Usage
