@@ -21,6 +21,15 @@ Other features will be added in later versions.
 
 ## Installation
 
+### Build Mesos cluster
+
+```
+$ cd vagrant
+$ vagrant up
+```
+
+### Compile source code
+
 ```
 $ go get github.com/icsnju/apt-mesos
 $ cd $GOPATH/src/github.com/icsnju/apt-mesos
@@ -32,13 +41,13 @@ $ go build
 ### Start server
 
 ```
-./apt-mesos --master=<mesos_addr> --addr=<server_listened_addr>
+$ ./apt-mesos --master=<mesos_addr> --addr=<server_listened_addr>
 ```
 
 ### Submit a task:
 
 ```
-curl -X POST -H "Accept: application/json" -H "Content-Type: application/json" <server_listened_addr>/api/tasks -d@task.json 
+$ curl -X POST -H "Accept: application/json" -H "Content-Type: application/json" <server_listened_addr>/api/tasks -d@task.json 
 ```
 
 ### Task format
