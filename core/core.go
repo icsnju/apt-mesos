@@ -73,13 +73,11 @@ func (core *Core) RequestOffers(resources []*mesosproto.Resource) ([]*mesosproto
 
 		event = <-core.GetEvent(mesosproto.Event_OFFERS)
 	}
-
 	core.log.Infof("Received %d offer(s).", len(event.Offers.Offers))
 	return event.Offers.Offers, nil	
 }
 
-// LauchTask with specific offer and resources
-func (core *Core) LaunchTask(offer *mesosproto.Offer, resources []*mesosproto.Resource, task *registry.Task) error {
+func (core *Core) AcceptOffer(offer *mesosproto.Offer, resources []*mesosproto.Resource, task *registry.Task) error {
 	core.log.WithFields(logrus.Fields{"ID": task.ID, "command": task.Command, "offerId": offer.Id, "dockerImage": task.DockerImage}).Info("Launching task...")
 
 	taskInfo := createTaskInfo(offer, resources, task)
@@ -91,7 +89,36 @@ func (core *Core) LaunchTask(offer *mesosproto.Offer, resources []*mesosproto.Re
 			offer.Id,
 		},
 		Filters: &mesosproto.Filters{},
-	}, "mesos.internal.LaunchTasksMessage")
+	}, "mesos.internal.LaunchTasksMessage")	
+}
+
+func (core *Core) DeclineOffer(offer *mesosproto.Offer, task *registry.Task) error{
+	core.log.WithFields(logrus.Fields{"offerId": offer.Id, "slave": offer.GetHostname()}).Debug("Decline offer...")
+
+	return core.SendMessageToMesos(&mesosproto.LaunchTasksMessage{
+		FrameworkId: core.frameworkInfo.Id,
+		Tasks:       []*mesosproto.TaskInfo{},
+		OfferIds: []*mesosproto.OfferID{
+			offer.Id,
+		},
+		Filters: &mesosproto.Filters{},
+	}, "mesos.internal.LaunchTasksMessage")	
+}
+
+// LauchTask with specific offer and resources
+func (core *Core) LaunchTask(offer *mesosproto.Offer, offers []*mesosproto.Offer, resources []*mesosproto.Resource, task *registry.Task) error {
+	for _, value := range offers {
+		if offer.GetId().GetValue() == value.GetId().GetValue() {
+			if err := core.AcceptOffer(value, resources, task); err != nil {
+				return err
+			}
+		} else {
+			if err := core.DeclineOffer(value, task); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 // Kill task with id

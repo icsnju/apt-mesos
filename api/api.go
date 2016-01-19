@@ -114,7 +114,7 @@ func (api *API) AddTask() martini.Handler {
 		}
 
 		// lauch task
-		err = api.core.LaunchTask(offer, resources, task)
+		err = api.core.LaunchTask(offer, offers, resources, task)
 		if err != nil {
 			writeError(w, err)
 			return

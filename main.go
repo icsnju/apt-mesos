@@ -13,6 +13,7 @@ import (
 var (
 	addr 		string
 	master		string
+	debug		bool
 
 	frameworkName 	= "apt-mesos"
 	user			= "vagrant"
@@ -22,11 +23,14 @@ var (
 func init() {
 	flag.StringVar(&addr, "addr", "127.0.0.1:3030", "Address to listen on <ip:port>")
 	flag.StringVar(&master, "master", "127.0.0.1:5050", "Master to connect to <ip:port>")
+	flag.BoolVar(&debug, "debug", false, "Run in debug mode")
 	flag.Parse()
 }
 
 func main() {
-	log.Level = logrus.DebugLevel
+	if debug {
+		log.Level = logrus.DebugLevel
+	}
 
 	// create frameworkInfo
 	frameworkInfo := &mesosproto.FrameworkInfo{

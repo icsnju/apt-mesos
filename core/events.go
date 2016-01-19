@@ -22,6 +22,13 @@ func (core *Core) AddEvent(eventType mesosproto.Event_Type, event *mesosproto.Ev
 	core.log.WithFields(logrus.Fields{"type": eventType}).Debug("Received event from master.")
 	if eventType == mesosproto.Event_OFFERS {
 		core.log.Debugf("Received %d offer(s).", len(event.Offers.Offers))
+		var offer *mesosproto.Offer
+		for _, offer = range event.Offers.Offers {
+			core.log.WithFields(logrus.Fields{
+				"offer-slave-id": offer.GetHostname(),
+				"offer-cpu": ScalarResource("cpus", offer),
+			}).Debug("offers details ")
+		}		
 	}
 
 	if c, ok := core.events[eventType]; ok {
