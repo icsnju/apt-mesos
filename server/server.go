@@ -34,7 +34,11 @@ func createRouter(core *core.Core, apis *api.API) martini.Router {
     router.Get("/api/handshake", apis.Handshake())
     router.Get("/api/tasks", apis.ListTasks())
     router.Post("/api/tasks", apis.AddTask())
-    router.Delete("/api/tasks/:id", apis.DeleteTask())	
+    router.Delete("/api/tasks/:id", apis.DeleteTask())  
+    router.Put("/api/tasks/:id/kill", apis.KillTask())	
+
+    // create monitor endpoints
+    router.Get("/api/metrics", apis.Metrics())
 
     // create mesos endpoints
     for method, routes := range core.Endpoints {

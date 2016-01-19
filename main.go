@@ -29,7 +29,10 @@ func main() {
 	log.Level = logrus.DebugLevel
 
 	// create frameworkInfo
-	frameworkInfo := &mesosproto.FrameworkInfo{Name: &frameworkName, User: &user}
+	frameworkInfo := &mesosproto.FrameworkInfo{
+		Name: 		&frameworkName, 
+		User: 		&user,
+	}
 	
 	// create registry
 	registry := registry.NewRegistry()

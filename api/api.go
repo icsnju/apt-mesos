@@ -126,6 +126,21 @@ func (api *API) AddTask() martini.Handler {
 	}
 }
 
+func (api *API) KillTask() martini.Handler {
+	return func(w http.ResponseWriter, r *http.Request,params martini.Params) {
+		var result Result
+		id := params["id"]
+
+		if err := api.core.KillTask(id); err != nil {
+			writeError(w, err)
+			return
+		}
+
+		result.Success = true
+		result.Result = "OK"
+		result.Response(w)		
+	}
+}
 
 /*
 Delete and kill specific tasks
@@ -138,7 +153,11 @@ func (api *API) DeleteTask() martini.Handler {
 		var result Result
 		id := params["id"]
 
-		// TODO killTask
+		if err := api.core.KillTask(id); err != nil {
+			writeError(w, err)
+			return
+		}
+
 		if err := api.registry.DeleteTask(id); err != nil {
 			writeError(w, err)
 			return
@@ -150,6 +169,21 @@ func (api *API) DeleteTask() martini.Handler {
 	}
 }
 
+func (api *API) Metrics() martini.Handler{
+	return func(w http.ResponseWriter, r *http.Request,params martini.Params) {
+		var result Result
+		var metrics *core.Metrics
+		metrics, err := api.core.Metrics()
+		if err != nil {
+			writeError(w, err)
+			return			
+		}
+
+		result.Success = true
+		result.Result = metrics
+		result.Response(w)		
+	}	
+}
 func writeError(w http.ResponseWriter, err error) {
 	var result Result
 	result.Error = err

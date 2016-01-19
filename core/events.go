@@ -20,6 +20,10 @@ func NewEvents() Events {
 
 func (core *Core) AddEvent(eventType mesosproto.Event_Type, event *mesosproto.Event) error {
 	core.log.WithFields(logrus.Fields{"type": eventType}).Debug("Received event from master.")
+	if eventType == mesosproto.Event_OFFERS {
+		core.log.Debugf("Received %d offer(s).", len(event.Offers.Offers))
+	}
+
 	if c, ok := core.events[eventType]; ok {
 		c <- event
 		return nil

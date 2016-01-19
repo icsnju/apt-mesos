@@ -97,8 +97,5 @@ func (core *Core) GetMetricsData() (*MetricsData, error) {
 	}
 	resp.Body.Close()
 
-	core.log.WithFields(
-		logrus.Fields{"metrics_data": data}).Infoln("Get metrics data.")
-
 	return data, nil
 }
