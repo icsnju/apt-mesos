@@ -17,7 +17,7 @@ Other features will be added in later versions.
 	* vagrant-berkshelf `$ vagrant plugin install vagrant-berkshelf`
 	* vaggrant-hosts `$ vagrant plugin install vagrant-hosts`
 
-**Note:** You should build a `Mesos` environment first. We provide `Vagrantfile` and some scripts to help you build `Mesos` Cluster easily (thanks to [everpeace/vagrant-mesos](https://github.com/everpeace/vagrant-mesos)), or you can use [playa-mesos](https://github.com/mesosphere/playa-mesos).
+**Note:** You should build a `Mesos` environment first. We provide `Vagrantfile` and some scripts to help you build `Mesos Cluster` easily (thanks to [everpeace/vagrant-mesos](https://github.com/everpeace/vagrant-mesos)), or you can use [playa-mesos](https://github.com/mesosphere/playa-mesos) to build `Mesos Standalone` .
 
 ## Installation
 
