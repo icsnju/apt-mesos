@@ -169,7 +169,13 @@ func (api *API) DeleteTask() martini.Handler {
 	}
 }
 
-func (api *API) Metrics() martini.Handler{
+/*
+Endpoints to get system metrics data
+
+method:		GET
+path:		/api/system/metrics
+*/
+func (api *API) SystemMetrics() martini.Handler{
 	return func(w http.ResponseWriter, r *http.Request,params martini.Params) {
 		var result Result
 		var metrics *core.Metrics
@@ -184,6 +190,29 @@ func (api *API) Metrics() martini.Handler{
 		result.Response(w)		
 	}	
 }
+
+/*
+Endpoints to get slave's metrics data
+
+method:		GET
+path:		/api/slave/metrics
+*/
+func (api *API) SlaveMetrics() martini.Handler{
+	return func(w http.ResponseWriter, r *http.Request,params martini.Params) {
+		var result Result
+		var metrics *core.MetricsData
+		metrics, err := api.core.GetMetricsData()
+		if err != nil {
+			writeError(w, err)
+			return			
+		}
+
+		result.Success = true
+		result.Result = metrics.Slaves
+		result.Response(w)		
+	}	
+}
+
 func writeError(w http.ResponseWriter, err error) {
 	var result Result
 	result.Error = err
