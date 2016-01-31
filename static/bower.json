@@ -14,6 +14,8 @@
   ],
   "dependencies": {
     "font-awesome": "~4.5.0",
-    "bootstrap": "~3.3.6"
+    "bootstrap": "~3.3.6",
+    "Flot": "flot#^0.8.3",
+    "peity": "^3.2.0"
   }
 }

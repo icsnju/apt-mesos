@@ -3,8 +3,6 @@ package core
 import (
 	"net/http"
 	"encoding/json"
-
-	"github.com/Sirupsen/logrus"
 )
 
 type Metrics struct {
@@ -77,9 +75,6 @@ func (core *Core) Metrics() (*Metrics, error) {
 		metrics.TotalCpus += slave.Resources.Cpus
 		metrics.TotalDisk += slave.Resources.Disk
 	}
-
-	core.log.WithFields(
-		logrus.Fields{"metrics": metrics}).Infoln("Get metrics.")
 
 	return &metrics, nil
 }

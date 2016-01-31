@@ -1,43 +1,43 @@
 var path = require('path');
-
+var ExtractTextPlugin = require("extract-text-webpack-plugin");
 module.exports = {
-    // 入口
     entry: './src/main',
-    // 输出
     output: {
         path: path.join(__dirname, './dist'),
         filename: 'build.js',
         publicPath: '/dist/'
     },
+
     module: {
         // 加载器
         loaders: [
             { test: /\.vue$/, loader: 'vue' },
             { test: /\.js$/, loader: 'babel', exclude: /node_modules/ },
             { test: /\.css$/, loader: 'style!css!autoprefixer'},
-            { test: /\.less/, loader: 'style!css!autoprefixer!less'},
+            { test: /\.scss$/, loader: ExtractTextPlugin.extract("style-loader", 'css-loader!sass-loader')},
+            { test: /\.css$/, loader: ExtractTextPlugin.extract("style-loader", "css-loader")},
             { test: /\.(png|jpg|gif)$/, loader: 'url-loader'},
             { test: /\.(html|tpl)$/, loader: 'html-loader' },
+            { test: /\.json$/, loader: 'json' },
         ]
     },
     vue: {
-        loaders: {
-            css: 'style!css!autoprefixer!less'
-        }
+        css: ExtractTextPlugin.extract("css"),
+        sass: ExtractTextPlugin.extract("css!sass-loader")
     },
     babel: {
         presets: ['es2015'],
         plugins: ['transform-runtime']
     },
     resolve: {
-        // require时省略的扩展名，如：require('module') 不需要module.js
         extensions: ['', '.js', '.vue'],
-        // 别名
         alias: {
             filter: path.join(__dirname, './src/filters'),
             components: path.join(__dirname, './src/components')
         }
     },
-    // 开启source-map，webpack有多种source-map，在官网文档可以查到
+    plugins: [
+        new ExtractTextPlugin("styles.css")
+    ],
     devtool: '#source-map'
 };

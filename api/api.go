@@ -126,6 +126,12 @@ func (api *API) AddTask() martini.Handler {
 	}
 }
 
+/*
+Kill a task which is running
+
+method:		PUT
+path:		/api/tasks/:taskId/kill
+*/
 func (api *API) KillTask() martini.Handler {
 	return func(w http.ResponseWriter, r *http.Request,params martini.Params) {
 		var result Result
@@ -146,7 +152,7 @@ func (api *API) KillTask() martini.Handler {
 Delete and kill specific tasks
 
 method:		POST
-path:		/api/tasks
+path:		/api/tasks/:taskId
 */
 func (api *API) DeleteTask() martini.Handler {
 	return func(w http.ResponseWriter, r *http.Request,params martini.Params) {
