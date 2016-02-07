@@ -40,7 +40,7 @@ export default {
 	ready() {
     	this.chart = $('#' + this.chart_id).peity('line', {
       		width: '100%',
-      		height: 100,
+      		height: 130,
 	    })		
 	},
   	watch: {

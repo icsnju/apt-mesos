@@ -14,10 +14,10 @@
                   </a>
                </li>
                <li class=" ">
-                  <a href="widgets.html" title="Widgets">
+                  <a href="#tasks" title="Tasks">
                      <div class="pull-right label label-success">30</div>
                      <em class="icon-grid"></em>
-                     <span>Widgets</span>
+                     <span>Tasks</span>
                   </a>
                </li>
             </ul>
