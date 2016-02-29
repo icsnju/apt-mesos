@@ -12,6 +12,10 @@ type Metrics struct {
 	UsedCpus  float64 `json:"used_cpus"`
 	UsedMem   float64 `json:"used_mem"`
 	UsedDisk  float64 `json:"used_disk"`
+	TaskRunning int64 `json:"task_running"`
+	TaskStaging int64 `json:"task_staging"`
+	TaskFinished int64 `json:"task_finished"`
+	TaskKilled   int64 `json:"task_killed"`
 	//TODO add customed resources
 }
 
@@ -26,11 +30,13 @@ type MetricsData struct {
 				Mem  float64
 				Disk float64
 			}
+			State	   string `json:"state"`
 		}
 		CompletedTasks []struct {
 			ExecutorId string `json:"executor_id"`
 			Id         string
 			SlaveId    string `json:"slave_id"`
+			State      string `json:"state"`
 		} `json:"completed_tasks"`
 		Id string
 	}
@@ -67,6 +73,25 @@ func (core *Core) Metrics() (*Metrics, error) {
 			metrics.UsedMem += task.Resources.Mem
 			metrics.UsedCpus += task.Resources.Cpus
 			metrics.UsedDisk += task.Resources.Disk
+		}
+
+		if framework.Id == core.frameworkInfo.Id.GetValue() {
+			for _, task := range framework.Tasks {
+				switch task.State {
+					case "TASK_RUNNING": 
+						metrics.TaskRunning ++
+					case "TASK_STAGING":
+						metrics.TaskStaging ++
+				}
+			}
+			for _, task := range framework.CompletedTasks {
+				switch task.State {
+					case "TASK_FINISHED":
+						metrics.TaskFinished ++
+					case "TASK_KILLED":
+						metrics.TaskKilled ++
+				}
+			}
 		}
 	}
 

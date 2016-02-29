@@ -11,7 +11,7 @@ import (
 
 func createTaskInfo(offer *mesosproto.Offer, resources []*mesosproto.Resource, task *registry.Task) *mesosproto.TaskInfo {
 	taskInfo := mesosproto.TaskInfo{
-		Name: proto.String(fmt.Sprintf("volt-task-%s", task.ID)),
+		Name: proto.String(fmt.Sprintf("task-%s", task.ID)),
 		TaskId: &mesosproto.TaskID{
 			Value: &task.ID,
 		},

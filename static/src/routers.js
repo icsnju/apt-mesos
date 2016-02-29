@@ -1,13 +1,13 @@
-'use strict'
+import Home from './views/home.vue'
 
-export default function(router){
+export default function (router){
 	router.map({
-		'/': {
-			name: 'dashboard',
-			component: require('./views/dashboard.vue')
-		},
-        '*': {
-            component: require('./views/dashboard.vue')
-        },		
+	    '/home': {
+	      component: Home
+	    },
 	})
+
+    router.redirect({
+		'/': '/home'
+  	})
 }

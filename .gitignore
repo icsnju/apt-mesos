@@ -24,3 +24,4 @@ _testmain.go
 *.prof
 
 .DS_STORE
+npm-debug.log
