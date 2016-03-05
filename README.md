@@ -79,5 +79,8 @@ Usage of ./apt-mesos:
     	Master to connect to <ip:port> (default "127.0.0.1:5050")
 ``` 
 
+### Hack the WEBUI
+
+We provide a simple WEBUI, welcome to fork the code [https://github.com/JetMuffin/sher-frontend](https://github.com/JetMuffin/sher-frontend) and contribute to this project!
 ## Contributors
 [JetMuffin](https://github.com/JetMuffin)
