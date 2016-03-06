@@ -85,13 +85,10 @@
 		},
 		ready() {
 			this.getTasks()
-			console.log($(".i-checks"))
-	        // $(".i-checks").iCheck({
-	        //     checkboxClass: "icheckbox_square-green",
-	        //     radioClass: "iradio_square-green"
-	        // })	
-            console.log($(".i-checks"))
-            // $(".i-checks").hide()		
+	        $(".i-checks").iCheck({
+	            checkboxClass: "icheckbox_square-green",
+	            radioClass: "iradio_square-green"
+	        })	
 		},
 		methods:{
             getTasks (){

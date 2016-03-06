@@ -18,9 +18,9 @@ var plugins = [
         disable: false
     }),
     // 使用 ProvidePlugin 加载使用率高的依赖库
-    new webpack.ProvidePlugin({
-      $: 'webpack-zepto'
-    })
+    // new webpack.ProvidePlugin({
+    //   $: 'webpack-zepto'
+    // })
 ];
 var entry = ['./src/main'],
     cdnPrefix = "",

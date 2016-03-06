@@ -169,7 +169,10 @@
 					// toastr.success('My name is Inigo Montoya. You killed my father, prepare to die!')
 				}, function (response) {
 					_this.tasks.push(_this.task)
-					toastr.success('My name is Inigo Montoya. You killed my father, prepare to die!')
+                    $.gritter.add({
+                        title: 'Task Information',
+                        text: 'Successful created a task'
+                    })
 				})
 			},
 		}
