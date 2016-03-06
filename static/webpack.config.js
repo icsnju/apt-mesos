@@ -1,109 +1,95 @@
-'use strict';
+'use strict'
 
-// Modules
-var webpack = require('webpack');
-var autoprefixer = require('autoprefixer');
-var HtmlWebpackPlugin = require('html-webpack-plugin');
-var ExtractTextPlugin = require('extract-text-webpack-plugin');
-var CopyWebpackPlugin = require('copy-webpack-plugin');
+var path = require('path');
+var webpack = require("webpack");
+var ExtractTextPlugin = require("extract-text-webpack-plugin");
+var vue = require("vue-loader");
+var isProduction = function() {
+    return process.env.NODE_ENV === 'production';
+}
 
-var ENV = process.env.npm_lifecycle_event;
-var isTest = ENV === 'test' || ENV === 'test-watch';
-var isProd = ENV === 'build';
-
-module.exports = function makeWebpackConfig () {
-  var config = {};
-
-  config.entry = isTest ? {} : {
-    app: './src/app/app.js'
-  };
-
-  config.output = isTest ? {} : {
-    path: __dirname + '/dist',
-    publicPath: isProd ? '/' : 'http://localhost:8080/',
-    filename: isProd ? '[name].[hash].js' : '[name].bundle.js',
-    chunkFilename: isProd ? '[name].[hash].js' : '[name].bundle.js'
-  };
-
-  if (isTest) {
-    config.devtool = 'inline-source-map';
-  } else if (isProd) {
-    config.devtool = 'source-map';
-  } else {
-    config.devtool = 'eval-source-map';
-  }
-
-  // Initialize module
-  config.module = {
-    preLoaders: [],
-    loaders: [{
-      test: /\.js$/,
-      loader: 'babel',
-      exclude: /node_modules/
-    }, {
-      test: /\.css$/,
-      loader: isTest ? 'null' : ExtractTextPlugin.extract('style', 'css?sourceMap!postcss')
-    }, { 
-      test: /\.scss$/, 
-      loader: ExtractTextPlugin.extract("style-loader", 'css-loader!sass-loader')
+//webpack插件
+var plugins = [
+    //提公用js到common.js文件中
+    new webpack.optimize.CommonsChunkPlugin('common.js'),
+    //将样式统一发布到style.css中
+    new ExtractTextPlugin("style.css", {
+        allChunks: true,
+        disable: false
+    }),
+    // 使用 ProvidePlugin 加载使用率高的依赖库
+    new webpack.ProvidePlugin({
+      $: 'webpack-zepto'
+    })
+];
+var entry = ['./src/main'],
+    cdnPrefix = "",
+    buildPath = "/dist/",
+    publishPath = cdnPrefix + buildPath;
+//生产环境js压缩和图片cdn
+if (isProduction()) {
+    //plugins.push(new webpack.optimize.UglifyJsPlugin());
+    cdnPrefix = "";
+    publishPath = cdnPrefix;
+}
+//编译输出路径
+module.exports = {
+    debug: true,
+    entry: entry,
+    output: {
+        path: __dirname + buildPath,
+        filename: 'build.js',
+        publicPath: publishPath
     },
-    {
-      test: /\.(png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot)$/,
-      loader: 'file'
-    }, {
-      test: /\.html$/,
-      loader: 'raw'
-    }]
-  };
-
-
-  if (isTest) {
-    config.module.preLoaders.push({
-      test: /\.js$/,
-      exclude: [
-        /node_modules/,
-        /\.spec\.js$/
-      ],
-      loader: 'isparta-instrumenter'
-    })
-  }
-
-  config.postcss = [
-    autoprefixer({
-      browsers: ['last 2 version']
-    })
-  ];
-
-  config.plugins = [];
-
-  // Skip rendering index.html in test mode
-  if (!isTest) {
-    config.plugins.push(
-      new HtmlWebpackPlugin({
-        template: './src/public/index.html',
-        inject: 'body'
-      }),
-      new ExtractTextPlugin('[name].[hash].css', {disable: !isProd})
-    )
-  }
-
-  // Add build specific plugins
-  if (isProd) {
-    config.plugins.push(
-      new webpack.NoErrorsPlugin(),
-      new webpack.optimize.DedupePlugin(),
-      new webpack.optimize.UglifyJsPlugin(),
-
-      new CopyWebpackPlugin([{
-        from: __dirname + '/src/public'
-      }])
-    )
-  }
-
-  config.devServer = {
-    contentBase: './src/public',
-    stats: 'minimal'
-  };
-
-  return config;
-}();
+    module: {
+        loaders: [{
+            test: /\.vue$/,
+            loader: 'vue',
+        }, {
+            test: /\.scss$/,
+            loader: ExtractTextPlugin.extract(
+                "style-loader", 'css-loader?sourceMap!sass-loader!cssnext-loader')
+        }, {
+            test: /\.css$/,
+            loader: ExtractTextPlugin.extract(
+                "style-loader", "css-loader?sourceMap!cssnext-loader")
+        }, {
+            test: /\.js$/,
+            exclude: /node_modules|vue\/dist/,
+            loader: 'babel'
+        },{
+            test: /\.(jpg|png|gif)$/,
+            loader: "file-loader?name=images/[hash].[ext]"
+        }, {
+            test: /\.woff(2)?(\?v=[0-9]\.[0-9]\.[0-9])?$/,
+            loader: "url-loader?limit=10000&minetype=application/font-woff"
+        }, {
+            test: /\.(ttf|eot|svg|woff)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
+            loader: "file-loader"
+        }, {
+            test: /\.json$/,
+            loader: 'json'
+        }, {
+            test: /\.(html|tpl)$/,
+            loader: 'html-loader'
+        }]
+    },
+    vue: {
+        css: ExtractTextPlugin.extract("css"),
+        sass: ExtractTextPlugin.extract("css!sass-loader")
+    },
+    babel: {
+        presets: ['es2015', 'stage-0'],
+        plugins: ['transform-runtime']
+    },
+    resolve: {
+        // require时省略的扩展名，如：require('module') 不需要module.js
+        extension: ['', '.js'],
+        //别名
+        alias: {
+            filter: path.join(__dirname, 'src/filters')
+        }
+    },
+    plugins: plugins,
+    devtool: '#source-map'
+};
