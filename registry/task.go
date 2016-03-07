@@ -5,6 +5,7 @@ import (
 )
 type Task struct {
 	ID          	string   				`json:"id"`
+	Name			string					`json:"name"`
 	DockerImage 	string   				`json:"docker_image"`
 	Command     	string   				`json:"cmd"`
 	Cpus        	float64  				`json:"cpus,string"`
@@ -16,8 +17,9 @@ type Task struct {
 
 	DockerID		string
 	DockerName		string
-	SlaveID     	string
-	CreatedTime     int64
+	SlaveId       string                `json:"slave_id,string"`
+	SlaveHostname string                `json:"slave_hostname"`
+	CreatedTime     int64				`json:"create_time"`
 	TaskInfo		*mesosproto.TaskInfo
 }
 

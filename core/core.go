@@ -13,7 +13,6 @@ type Core struct {
 	master  		string
 	frameworkInfo  	*mesosproto.FrameworkInfo
 	log				*logrus.Logger
-	registry		*registry.Registry
 	events 			Events
 	
 	Endpoints		map[string]map[string]func(w http.ResponseWriter, r *http.Request) error

@@ -3,6 +3,7 @@ package registry
 import (
 	"errors"
 	"sync"
+	"github.com/icsnju/apt-mesos/mesosproto"
 )
 
 var (
@@ -76,3 +77,15 @@ func (registry *Registry) UpdateTask(id string, task *Task) error{
 	return nil
 }
 
+func (registry *Registry) UpdateTaskState(id string, state mesosproto.TaskState) error{
+	registry.Lock()
+	defer registry.Unlock()
+
+	_, exists := registry.tasks[id]
+	if !exists {
+		return TaskNotExistsErr
+	}
+
+	registry.tasks[id].State = &state	
+	return nil		
+}

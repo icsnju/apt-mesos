@@ -26,12 +26,3 @@ let router = new VueRouter({
 routerMap(router);
 
 router.start(app, "#app");
-
-toastr.options = {
-  "newestOnTop": true,
-  "progressBar": true,
-  "positionClass": "toast-top-right",
-  "timeOut": "3000",
-  "showEasing": "swing",
-  "hideEasing": "linear",
-}

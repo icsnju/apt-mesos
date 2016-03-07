@@ -141,7 +141,7 @@
 	export default {
 		props: {
 			form: Object,
-			tasks: Array
+			tasks: Array,
 		},
 		data() {
 			return {
