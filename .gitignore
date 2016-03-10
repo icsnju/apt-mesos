@@ -24,3 +24,6 @@ _testmain.go
 *.prof
 
 .DS_STORE
+npm-debug.log
+node_modules
+static/bower_components

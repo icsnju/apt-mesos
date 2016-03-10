@@ -1,6 +1,7 @@
 package api
 
 import (
+	"time"
 	"net/http"
 	"crypto/rand"
 	"encoding/hex"
@@ -113,6 +114,20 @@ func (api *API) AddTask() martini.Handler {
 			return
 		}
 
+		// update task registry
+		task.SlaveId = *offer.SlaveId.Value
+		task.SlaveHostname, err = api.core.GetSlaveHostname(task.SlaveId)
+		if err != nil {
+			writeError(w, err)
+			return
+		}
+		task.CreatedTime = time.Now().Unix()*1000
+
+		if err := api.registry.UpdateTask(task.ID, task); err != nil {
+			writeError(w, err)
+			return 
+		}
+
 		// lauch task
 		err = api.core.LaunchTask(offer, offers, resources, task)
 		if err != nil {
@@ -126,6 +141,12 @@ func (api *API) AddTask() martini.Handler {
 	}
 }
 
+/*
+Kill a task which is running
+
+method:		PUT
+path:		/api/tasks/:taskId/kill
+*/
 func (api *API) KillTask() martini.Handler {
 	return func(w http.ResponseWriter, r *http.Request,params martini.Params) {
 		var result Result
@@ -146,7 +167,7 @@ func (api *API) KillTask() martini.Handler {
 Delete and kill specific tasks
 
 method:		POST
-path:		/api/tasks
+path:		/api/tasks/:taskId
 */
 func (api *API) DeleteTask() martini.Handler {
 	return func(w http.ResponseWriter, r *http.Request,params martini.Params) {
@@ -179,12 +200,15 @@ func (api *API) SystemMetrics() martini.Handler{
 	return func(w http.ResponseWriter, r *http.Request,params martini.Params) {
 		var result Result
 		var metrics *core.Metrics
-		metrics, err := api.core.Metrics()
+		metrics, states, err := api.core.Metrics()
 		if err != nil {
 			writeError(w, err)
 			return			
 		}
 
+		for id, state := range states {
+			api.registry.UpdateTaskState(id, state)
+		}
 		result.Success = true
 		result.Result = metrics
 		result.Response(w)		

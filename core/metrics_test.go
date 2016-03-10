@@ -2,6 +2,7 @@ package core
 
 import (
 	"testing"
+	"fmt"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -28,6 +29,6 @@ func TestMetrics(t *testing.T) {
 }
 
 func TestMetricsData(t *testing.T) {
-	_, err := c.GetMetricsData()
+	data, err := c.GetMetricsData()
 	assert.NoError(t, err)
 }
