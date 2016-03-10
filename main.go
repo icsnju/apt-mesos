@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"os"
 	
 	"github.com/Sirupsen/logrus"
 	"github.com/icsnju/apt-mesos/mesosproto"
@@ -32,10 +33,20 @@ func main() {
 		log.Level = logrus.DebugLevel
 	}
 
+	// get current hostname
+    hostname, err := os.Hostname()
+    if err != nil {
+        log.Fatal(err)
+    } 
+
+    webuiUrl := "http://" + addr
+
 	// create frameworkInfo
 	frameworkInfo := &mesosproto.FrameworkInfo{
 		Name: 		&frameworkName, 
 		User: 		&user,
+		WebuiUrl:	&webuiUrl,
+		Hostname:	&hostname,
 	}
 	
 	// create registry
