@@ -68,7 +68,7 @@ func ListenAndServe(addr string, registry *registry.Registry, core *core.Core) {
 	m := martini.New()
     m.Use(cors.Allow(&cors.Options{
         AllowOrigins:     []string{"*"},
-        AllowMethods:     []string{"POST"},
+        AllowMethods:     []string{"POST", "GET", "PUT", "DELETE"},
         AllowHeaders:     []string{"Origin", "x-requested-with", "Content-Type", "Content-Range", "Content-Disposition", "Content-Description"},
         ExposeHeaders:    []string{"Content-Length"},
         AllowCredentials: false,
