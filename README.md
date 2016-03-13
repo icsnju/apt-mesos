@@ -46,9 +46,7 @@ $ ./apt-mesos --master=<mesos_addr> --addr=<server_listened_addr>
 
 ### AM WebUI
 
-```
-Open your browser and visit http://<server_listened_addr>, then you can create a task easily and fetch the test results.
-```
+Open your browser and visit `http://<server_listened_addr>`, then you can create a task easily and fetch the test results.
 
 ### Submit a task:
 
