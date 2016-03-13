@@ -2,11 +2,11 @@
 
 Apt-Mesos is a Mesos Framework for Testing which provides an easy way to build testing environment and schedule testing tasks in a multi-node cluster.
 
-The latest version is 0.1.0 alpha(a prototype version), which support:
+The latest version is 0.2.0, which support:
 * Use RESTful API to submit, list, delete, kill tasks
-* Run tasks with `docker container` wrapped
 * Measure cluster's metrics(`cpus`, `mem`, `disk`)
 Other features will be added in later versions.
+* WEBUI (updated on version 0.2.0)
 
 ## Prerequisites
 * golang (nessesary)
@@ -42,6 +42,12 @@ $ vagrant up
 
 ```
 $ ./apt-mesos --master=<mesos_addr> --addr=<server_listened_addr>
+```
+
+### AM WebUI
+
+```
+Open your browser and visit http://<server_listened_addr>, then you can create a task easily and fetch the test results.
 ```
 
 ### Submit a task:
