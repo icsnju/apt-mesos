@@ -24,13 +24,13 @@ func init() {
 	frameworkInfo := &mesosproto.FrameworkInfo{Name: &frameworkName, User: &user}
 	r := registry.NewRegistry()
 	log	:= logrus.New()
-	c := core.NewCore("127.0.0.1:3000", "127.0.0.1:5050", frameworkInfo, log)	
+	c := core.NewCore("127.0.0.1:4000", "127.0.0.1:5050", frameworkInfo, log)	
 
-	go server.ListenAndServe(":3000", r, c)	
+	go server.ListenAndServe(":4000", r, c)	
 }
 
 func TestHandshake(t *testing.T) {
-	res, err := http.Get("http://localhost:3000/api/handshake")
+	res, err := http.Get("http://localhost:4000/api/handshake")
 	defer res.Body.Close()
 	assert.NoError(t, err)
 
@@ -53,7 +53,7 @@ func TestSubmitTask(t *testing.T) {
 	assert.NoError(t, err)
 
 	body := bytes.NewBuffer([]byte(b))
-	res, err := http.Post("http://localhost:3000/api/tasks", "application/json;charset=utf-8", body)
+	res, err := http.Post("http://localhost:4000/api/tasks", "application/json;charset=utf-8", body)
 	assert.NoError(t, err)
 
 	result, err := ioutil.ReadAll(res.Body)
@@ -66,7 +66,7 @@ func TestSubmitTask(t *testing.T) {
 }
 
 func TestListTasks(t *testing.T) {
-	res, err := http.Get("http://localhost:3000/api/tasks")
+	res, err := http.Get("http://localhost:4000/api/tasks")
 	assert.NoError(t, err)
 
     body, err := ioutil.ReadAll(res.Body)

@@ -36,7 +36,11 @@ func createRouter(core *core.Core, apis *api.API) martini.Router {
     router.Get("/api/tasks", apis.ListTasks())
     router.Post("/api/tasks", apis.AddTask())
     router.Delete("/api/tasks/:id", apis.DeleteTask())  
-    router.Put("/api/tasks/:id/kill", apis.KillTask())	
+
+    router.Get("/api/jobs", apis.ListJobs())
+    router.Post("/api/jobs", apis.AddJob())
+    router.Delete("/api/jobs/:id", apis.DeleteJob())  
+    router.Get("/api/job/:id", apis.GetJob())  
 
     // create monitor endpoints
     router.Get("/api/system/metrics", apis.SystemMetrics())

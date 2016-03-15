@@ -1,7 +1,9 @@
 package registry
 
 type Job struct {
-	Environment    []*Container    `json: environments`
+	ID          	string   		`json:"id"`		
+	Name			string			`json:"name"`
+	Environments    	[]*Container    `json: environments`
 }
 
 
