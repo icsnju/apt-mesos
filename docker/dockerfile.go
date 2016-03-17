@@ -33,7 +33,7 @@ func NewDockerfile(file string, registry string) *Dockerfile {
 	return dockerfile
 }
 
-func (dockerfile *Dockerfile) parse(path string) {
+func (d *Dockerfile) parse(path string) {
   	f, err := os.Open(path)
     if err != nil {
     	log.Fatal(err)
@@ -53,34 +53,42 @@ func (dockerfile *Dockerfile) parse(path string) {
 	    lineBuf := strings.TrimLeft(line, " ")
 	    lineBuf = strings.TrimRight(lineBuf, " ")
 
-	    dockerfile.addInstruction(lineBuf)
+	    d.addInstruction(lineBuf)
 	}    	
 }
 
-func (dockerfile *Dockerfile) addInstruction(instruction string) {
+func (d *Dockerfile) addInstruction(instruction string) {
 	parts := strings.Split(instruction, " ")
 	command := strings.ToUpper(parts[0])
 	arguments := parts[1:]
 
-	if command == "FROM" && len(dockerfile.Registry) > 0{
+	if command == "FROM" && len(d.Registry) > 0{
 		parts = strings.Split(arguments[0], "/")
 		if len(parts) <= 2 {
-			parts[0] = dockerfile.Registry
+			parts[0] = d.Registry
 			arguments[0] = strings.Join(parts, "/")
 		}
 	}
 
-	dockerfile.Instructions = append(dockerfile.Instructions, &Instruction{
+	d.Instructions = append(d.Instructions, &Instruction{
 		Command: command,
 		Arguments: arguments,
 	})
 }
 
-func (dockerfile *Dockerfile) Build() string{
+func (d *Dockerfile) Build() string{
 	buffer := bytes.NewBufferString("")
-	for _, i := range dockerfile.Instructions {
+	for _, i := range d.Instructions {
 		buffer.WriteString(i.Command + " " + strings.Join(i.Arguments, " ") + "\n")
-		// fmt.Printf("%s %s", i.Command, strings.Join(i.Arguments, " "))
 	}
 	return buffer.String()
+}
+
+func (d *Dockerfile) HasLocalSources() bool {
+	for _, i := range d.Instructions {
+		if i.Command == "ADD" || i.Command == "COPY" {
+			return true
+		}
+	}
+	return false
 }
