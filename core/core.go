@@ -12,9 +12,9 @@ type Core struct {
 	addr 			string
 	master  		string
 	frameworkInfo  	*mesosproto.FrameworkInfo
-	log				*logrus.Logger
 	events 			Events
 	
+	Log				*logrus.Logger
 	Endpoints		map[string]map[string]func(w http.ResponseWriter, r *http.Request) error
 }
 
@@ -23,7 +23,7 @@ func NewCore(addr string, master string, frameworkInfo *mesosproto.FrameworkInfo
 		addr:			addr,
 		master:			master,
 		frameworkInfo: 	frameworkInfo,
-		log:			log,
+		Log:			log,
 		Endpoints:		nil,
 		events:			NewEvents(),
 	}
@@ -33,7 +33,7 @@ func NewCore(addr string, master string, frameworkInfo *mesosproto.FrameworkInfo
 
 // Framework register to mesos master
 func (core *Core) RegisterFramework() error {
-	core.log.WithFields(logrus.Fields{"master": core.master}).Info("Registering framework...")
+	core.Log.WithFields(logrus.Fields{"master": core.master}).Info("Registering framework...")
 
 	return core.SendMessageToMesos(&mesosproto.RegisterFrameworkMessage{
 		Framework: core.frameworkInfo,
@@ -42,7 +42,7 @@ func (core *Core) RegisterFramework() error {
 
 // framework unregister from mesos master
 func (core *Core) UnRegisterFramework() error {
-	core.log.WithFields(logrus.Fields{"master": core.master}).Info("Unregistering framework...")
+	core.Log.WithFields(logrus.Fields{"master": core.master}).Info("Unregistering framework...")
 
 	return core.SendMessageToMesos(&mesosproto.UnregisterFrameworkMessage{
 		FrameworkId: core.frameworkInfo.Id,
@@ -51,14 +51,14 @@ func (core *Core) UnRegisterFramework() error {
 
 // Send request to master for offers
 func (core *Core) RequestOffers(resources []*mesosproto.Resource) ([]*mesosproto.Offer, error){
-	core.log.Info("Request offers.")
+	core.Log.Info("Request offers.")
 
 	var event *mesosproto.Event
 	select {
 		case event = <-core.GetEvent(mesosproto.Event_OFFERS):
 	}
 	if event == nil {
-		core.log.Info("send message")
+		core.Log.Info("send message")
 		if err := core.SendMessageToMesos(&mesosproto.ResourceRequestMessage{
 			FrameworkId: core.frameworkInfo.Id,
 			Requests: []*mesosproto.Request{
@@ -72,12 +72,12 @@ func (core *Core) RequestOffers(resources []*mesosproto.Resource) ([]*mesosproto
 
 		event = <-core.GetEvent(mesosproto.Event_OFFERS)
 	}
-	core.log.Infof("Received %d offer(s).", len(event.Offers.Offers))
+	core.Log.Infof("Received %d offer(s).", len(event.Offers.Offers))
 	return event.Offers.Offers, nil	
 }
 
 func (core *Core) AcceptOffer(offer *mesosproto.Offer, resources []*mesosproto.Resource, task *registry.Task) error {
-	core.log.WithFields(logrus.Fields{"ID": task.ID, "command": task.Command, "offerId": offer.Id, "dockerImage": task.DockerImage}).Info("Launching task...")
+	core.Log.WithFields(logrus.Fields{"ID": task.ID, "command": task.Command, "offerId": offer.Id, "dockerImage": task.DockerImage}).Info("Launching task...")
 
 	taskInfo := createTaskInfo(offer, resources, task)
 
@@ -92,7 +92,7 @@ func (core *Core) AcceptOffer(offer *mesosproto.Offer, resources []*mesosproto.R
 }
 
 func (core *Core) DeclineOffer(offer *mesosproto.Offer, task *registry.Task) error{
-	core.log.WithFields(logrus.Fields{"offerId": offer.Id, "slave": offer.GetHostname()}).Debug("Decline offer...")
+	core.Log.WithFields(logrus.Fields{"offerId": offer.Id, "slave": offer.GetHostname()}).Debug("Decline offer...")
 
 	return core.SendMessageToMesos(&mesosproto.LaunchTasksMessage{
 		FrameworkId: core.frameworkInfo.Id,
@@ -122,7 +122,7 @@ func (core *Core) LaunchTask(offer *mesosproto.Offer, offers []*mesosproto.Offer
 
 // Kill task with id
 func (core *Core) KillTask(ID string) error {
-	core.log.WithFields(logrus.Fields{"ID": ID}).Info("Killing task...")
+	core.Log.WithFields(logrus.Fields{"ID": ID}).Info("Killing task...")
 
 	return core.SendMessageToMesos(&mesosproto.KillTaskMessage{
 		FrameworkId: core.frameworkInfo.Id,

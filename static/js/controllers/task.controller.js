@@ -22,7 +22,8 @@ function($scope, $http, $timeout, $state, $stateParams, $uibModal, Tasks) {
     var reload = function (query) {
         Tasks.refresh().$promise.then(function(response) {
             //TODO 错误处理
-            $scope.tasks = Tasks.getTasks(query)
+            $scope.tasks = Tasks.getTasks(query);
+            console.log($scope.tasks);
         });
     }
 
@@ -55,9 +56,22 @@ function($scope, $http, $timeout, $state, $stateParams, $uibModal, Tasks) {
             size: 'md',
             windowTemplateUrl: '/js/components/modal/modal.window.html',
             resolve: {
-
             }
         });
+    }
+
+    // 打开日志的模态对话框
+    $scope.openLogModal = function (task) {
+        var modalInstance = $uibModal.open({
+            animation: true,
+            templateUrl: '/js/templates/output.modal.html',
+            controller: LogModalCtrl,
+            size: 'md',
+            windowTemplateUrl: '/js/components/modal/console.window.html',
+            resolve: {
+                "task": task,
+            }    
+        })    
     }
 
     // 加载任务, 定时监控
@@ -72,8 +86,8 @@ function($scope, $http, $timeout, $state, $stateParams, $uibModal, Tasks) {
 var TaskModalCtrl = function ($scope, $uibModalInstance, Tasks) {
     // 数据初始化
     $scope.task = {
-        cpus:'0.1',
-        mem:'32',
+        cpus:'0.5',
+        mem:'64',
         disk:'0',
         docker_image:'busybox',
         cmd:'ls',
@@ -86,18 +100,18 @@ var TaskModalCtrl = function ($scope, $uibModalInstance, Tasks) {
         ],
         port_mappings: [
             {
-                container_port: "8000",
-                host_port: "8080",
-                protocol: "TCP"
+                container_port: "8080",
+                host_port: "31020",
+                protocol: "tcp"
             }
         ]
     }
 
     $scope.addPortMapping = function() {
         $scope.task.port_mappings.push({
-            container_port: "8000",
-                host_port: "8080",
-            protocol: "TCP"
+            container_port: "8080",
+                host_port: "31020",
+            protocol: "tcp"
         })
     }
 
@@ -127,4 +141,26 @@ var TaskModalCtrl = function ($scope, $uibModalInstance, Tasks) {
     $scope.cancel = function () {
         $uibModalInstance.dismiss('cancel');
     };
+};
+
+// 日志模块对话框控制器
+var LogModalCtrl = function ($scope, $uibModalInstance, Tasks, task) {
+    // 默认在logtab下
+    $scope.logTab = 'stderr';
+    consoleLog('stderr')     
+
+    $scope.console = function(file) {
+        consoleLog(file)     
+    };
+
+    $scope.refresh = function(file) {
+        consoleLog(file)
+    }
+
+    function consoleLog(file) {
+        $scope.logTab = file;
+        Tasks.getTaskFile(task.id, file, function(response){
+            $scope.logs = response.result.split('\n');
+        });    
+    }
 };
