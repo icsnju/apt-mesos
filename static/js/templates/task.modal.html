@@ -65,21 +65,21 @@
                                         <div class="col-sm-4">
                                             <div class="form-group">
                                                 <label class="control-label">Container Port</label>
-                                                <div><input type="text" ng-model="port_mapping.container_port" class="form-control"></div>
+                                                <div><input type="text" ng-model="port_mapping.container_port" onkeyup="this.value=this.value.replace(/[^\d]/g,'')" onpaste="return false"  class="form-control"></div>
                                             </div>
                                         </div>
                                         <div class="col-sm-4">
                                             <div class="form-group">
                                                 <label class="control-label">Host Port</label>
-                                                <div><input type="text" ng-model="port_mapping.host_port" class="form-control"></div>
+                                                <div><input type="text" ng-model="port_mapping.host_port" onkeyup="this.value=this.value.replace(/[^\d]/g,’’)" onpaste="return false" class="form-control"></div>
                                             </div>
                                         </div>
                                         <div class="col-sm-4">
                                             <div class="form-group">
                                                 <label class="control-label">Host Port</label>
                                                 <div><select type="text" ng-model="port_mapping.protocol" class="form-control">
-                                                    <option value="TCP">TCP</option>
-                                                    <option value="UDP">UDP</option>
+                                                    <option value="tcp">tcp</option>
+                                                    <option value="udp">udp</option>
                                                 </select></div>
                                             </div>
                                             <div class="controls">

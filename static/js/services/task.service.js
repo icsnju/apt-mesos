@@ -75,21 +75,6 @@ angular.module('sher.task')
                 return tasks;
             },
 
-            // 获取指定状态的任务
-            //getTasks: function(state) {
-            //    if(state === "0") {
-            //        return tasks;
-            //    } else {
-            //        var result = [];
-            //        for (var i = 0; i < tasks.length; i++) {
-            //            if(tasks[i].state === state) {
-            //                result.push(tasks[i]);
-            //            }
-            //        }
-            //        return result;
-            //    }
-            //},
-
             // 搜索任务
             getTasks: function(key) {
                 if(key == 'all') {
@@ -163,5 +148,14 @@ angular.module('sher.task')
                     return callback && callback(response);
                 })
             },
+
+            getTaskFile: function(id, file, callback) {
+                $http({
+                    method: 'GET',
+                    url: API + '/tasks/' + id + '/file/' + file
+                }).success(function(response) {
+                    return callback && callback(response);
+                })
+            }
         }
     }])

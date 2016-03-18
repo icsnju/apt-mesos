@@ -3,6 +3,16 @@ package registry
 import (
 	"github.com/icsnju/apt-mesos/mesosproto"
 )
+
+const (
+	SLA_ONE_PER_NODE = "one-per-node"
+	SLA_SINGLETON = "singleton"
+
+	NETWORK_MODE_BRIDGE = "bridge"
+	NETWORK_MODE_HOST = "host"
+	NETWORK_MODE_NONE = "none"
+)
+
 type Task struct {
 	ID          	string   				`json:"id"`
 	Name			string					`json:"name"`
@@ -14,6 +24,8 @@ type Task struct {
 	Arguments     	[]string  				`json:"arguments,omitempty"`
 	State         	*mesosproto.TaskState 	`json:"state,string"`
 	Volumes         []*Volume    		    `json:"volumes,omitempty"`
+	Ports         	[]*Port   				`json:"port_mappings,omitempty"`
+	NetworkMode   	string    				`json:"network_mode"`
 
 	DockerID		string
 	DockerName		string

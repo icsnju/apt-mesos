@@ -78,11 +78,12 @@ func (api *API) AddTask() martini.Handler {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var result Result
 		task := &registry.Task{State: &defaultState}
-
 		if err := json.NewDecoder(r.Body).Decode(&task); err != nil {
+			api.core.Log.Fatal(err)
 			writeError(w, err)
 			return
 		}
+		api.core.Log.WithField("task", task).Debug("task")
 
 		// generate task id
 		id := make([]byte, 6)
@@ -114,6 +115,8 @@ func (api *API) AddTask() martini.Handler {
 			return
 		}
 
+		api.core.Log.WithField("offer", offer).Debug("Scheduled Offer")
+
 		// update task registry
 		task.SlaveId = *offer.SlaveId.Value
 		task.SlaveHostname, err = api.core.GetSlaveHostname(task.SlaveId)
@@ -131,6 +134,7 @@ func (api *API) AddTask() martini.Handler {
 		// lauch task
 		err = api.core.LaunchTask(offer, offers, resources, task)
 		if err != nil {
+			api.core.Log.Fatal(err)
 			writeError(w, err)
 			return
 		}
@@ -235,6 +239,29 @@ func (api *API) SlaveMetrics() martini.Handler{
 		result.Result = metrics.Slaves
 		result.Response(w)		
 	}	
+}
+
+func (api *API) GetFile() martini.Handler{
+ 	return func(w http.ResponseWriter, r *http.Request, params martini.Params) {
+		var result Result
+		id := params["id"]
+		file := params["file"]
+
+		files, err := api.core.ReadFile(id, []string{file}...)
+		if err != nil {
+			writeError(w, err)
+			return
+		}
+		content, ok := files[file]
+		if !ok {
+			writeError(w, err)
+			return
+		}
+
+		result.Success = true
+		result.Result = content
+		result.Response(w)		
+	}
 }
 
 func writeError(w http.ResponseWriter, err error) {

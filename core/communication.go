@@ -13,7 +13,7 @@ import (
 func (core *Core) MesosMasterReachable() bool {
 	_, err := http.Get("http://" + core.master + "/health")
 	if err != nil {
-		core.log.Errorf("Failed to connect to mesos %v Error: %v\n", core.master, err)
+		core.Log.Errorf("Failed to connect to mesos %v Error: %v\n", core.master, err)
 		return false
 	}
 	return true
@@ -66,7 +66,7 @@ func (core *Core) FrameworkRegisteredMessage(w http.ResponseWriter, r *http.Requ
 		return err
 	}
 
-	core.log.WithField("frameworkId", message.FrameworkId).Debug("receive framworkId")
+	core.Log.WithField("frameworkId", message.FrameworkId).Debug("receive framworkId")
 	core.frameworkInfo.Id = message.FrameworkId
 
 	eventType := mesosproto.Event_REGISTERED
