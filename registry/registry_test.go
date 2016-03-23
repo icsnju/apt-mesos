@@ -1,17 +1,17 @@
 package registry
 
 import (
-	"testing"
 	"fmt"
+	"testing"
 
 	"github.com/icsnju/apt-mesos/registry"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestManager(t *testing.T) {
-	r := registry.NewRegistry()
+	r := registry.NewTaskRegistry()
 	task := registry.TestTask("1")
-	
+
 	// test add task
 	fmt.Println("Test case #1")
 	err := r.AddTask(task.ID, task)

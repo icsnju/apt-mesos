@@ -3,22 +3,22 @@ package main
 import (
 	"flag"
 	"os"
-	
+
 	"github.com/Sirupsen/logrus"
-	"github.com/icsnju/apt-mesos/mesosproto"
-	"github.com/icsnju/apt-mesos/server"
-	"github.com/icsnju/apt-mesos/registry"
 	"github.com/icsnju/apt-mesos/core"
+	"github.com/icsnju/apt-mesos/mesosproto"
+	"github.com/icsnju/apt-mesos/registry"
+	"github.com/icsnju/apt-mesos/server"
 )
 
 var (
-	addr 		string
-	master		string
-	debug		bool
+	addr   string
+	master string
+	debug  bool
 
-	frameworkName 	= "apt-mesos"
-	user			= "vagrant"
-	log				= logrus.New()
+	frameworkName = "apt-mesos"
+	user          = "vagrant"
+	log           = logrus.New()
 )
 
 func init() {
@@ -34,24 +34,24 @@ func main() {
 	}
 
 	// get current hostname
-    hostname, err := os.Hostname()
-    if err != nil {
-        log.Fatal(err)
-    } 
+	hostname, err := os.Hostname()
+	if err != nil {
+		log.Fatal(err)
+	}
 
-    webuiUrl := "http://" + addr
+	webuiURL := "http://" + addr
 
 	// create frameworkInfo
 	frameworkInfo := &mesosproto.FrameworkInfo{
-		Name: 		&frameworkName, 
-		User: 		&user,
-		WebuiUrl:	&webuiUrl,
-		Hostname:	&hostname,
+		Name:     &frameworkName,
+		User:     &user,
+		WebuiUrl: &webuiURL,
+		Hostname: &hostname,
 	}
-	
+
 	// create registry
-	registry := registry.NewRegistry()
-	
+	registry := registry.NewTaskRegistry()
+
 	// start a new core
 	core := core.NewCore(addr, master, frameworkInfo, log)
 
@@ -67,4 +67,3 @@ func main() {
 	exit := make(chan bool)
 	<-exit
 }
-
