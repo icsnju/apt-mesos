@@ -11,13 +11,13 @@ import (
 
 func createTaskInfo(offer *mesosproto.Offer, resources []*mesosproto.Resource, task *registry.Task) *mesosproto.TaskInfo {
 	portResources := []*mesosproto.Value_Range{}
-	
+
 	// Set the docker image if specified
-	dockerInfo := &mesosproto.ContainerInfo_DockerInfo {
+	dockerInfo := &mesosproto.ContainerInfo_DockerInfo{
 		Image: &task.DockerImage,
 	}
-	containerInfo := &mesosproto.ContainerInfo {
-		Type: mesosproto.ContainerInfo_DOCKER.Enum(),
+	containerInfo := &mesosproto.ContainerInfo{
+		Type:   mesosproto.ContainerInfo_DOCKER.Enum(),
 		Docker: dockerInfo,
 	}
 	for _, volume := range task.Volumes {
@@ -46,17 +46,16 @@ func createTaskInfo(offer *mesosproto.Offer, resources []*mesosproto.Resource, t
 
 	if len(task.Ports) > 0 {
 		// port mapping only works in bridge mode
-		dockerInfo.Network= mesosproto.ContainerInfo_DockerInfo_BRIDGE.Enum()
+		dockerInfo.Network = mesosproto.ContainerInfo_DockerInfo_BRIDGE.Enum()
 	} else if len(task.NetworkMode) > 0 {
-		if task.NetworkMode == registry.NETWORK_MODE_BRIDGE {
+		if task.NetworkMode == registry.NetworkModeBridge {
 			dockerInfo.Network = mesosproto.ContainerInfo_DockerInfo_BRIDGE.Enum()
-		} else if task.NetworkMode == registry.NETWORK_MODE_HOST {
+		} else if task.NetworkMode == registry.NetworkModeHost {
 			dockerInfo.Network = mesosproto.ContainerInfo_DockerInfo_HOST.Enum()
-		} else if task.NetworkMode == registry.NETWORK_MODE_NONE {
+		} else if task.NetworkMode == registry.NetworkModeNone {
 			dockerInfo.Network = mesosproto.ContainerInfo_DockerInfo_NONE.Enum()
 		}
 	}
-
 
 	commandInfo := &mesosproto.CommandInfo{
 		Shell: proto.Bool(false),
@@ -70,19 +69,19 @@ func createTaskInfo(offer *mesosproto.Offer, resources []*mesosproto.Resource, t
 	if len(task.Ports) > 0 {
 		resources = append(resources,
 			&mesosproto.Resource{
-				Name: proto.String("ports"),
-				Ranges: &mesosproto.Value_Ranges{ Range: portResources},
-				Type: mesosproto.Value_RANGES.Enum(),
+				Name:   proto.String("ports"),
+				Ranges: &mesosproto.Value_Ranges{Range: portResources},
+				Type:   mesosproto.Value_RANGES.Enum(),
 			},
 		)
 	}
 
-	taskInfo := &mesosproto.TaskInfo {
-		Name: proto.String(fmt.Sprintf("task-%s", task.ID)),
-		TaskId: &mesosproto.TaskID{Value: &task.ID},
+	taskInfo := &mesosproto.TaskInfo{
+		Name:      proto.String(fmt.Sprintf("task-%s", task.ID)),
+		TaskId:    &mesosproto.TaskID{Value: &task.ID},
 		SlaveId:   offer.SlaveId,
 		Container: containerInfo,
-		Command: commandInfo,
+		Command:   commandInfo,
 		Resources: resources,
 	}
 

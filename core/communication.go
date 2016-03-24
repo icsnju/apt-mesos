@@ -1,15 +1,16 @@
 package core
 
 import (
-	"fmt"
 	"bytes"
-	"net/http"
+	"fmt"
 	"io/ioutil"
+	"net/http"
 
-	"github.com/icsnju/apt-mesos/mesosproto"
 	"github.com/golang/protobuf/proto"
+	"github.com/icsnju/apt-mesos/mesosproto"
 )
 
+// MesosMasterReachable test whether mesos-master is connectable or not
 func (core *Core) MesosMasterReachable() bool {
 	_, err := http.Get("http://" + core.master + "/health")
 	if err != nil {
@@ -19,6 +20,7 @@ func (core *Core) MesosMasterReachable() bool {
 	return true
 }
 
+// SendMessageToMesos is the api to send proto message to mesos-master
 func (core *Core) SendMessageToMesos(msg proto.Message, path string) error {
 	data, err := proto.Marshal(msg)
 	if err != nil {
@@ -37,26 +39,28 @@ func (core *Core) SendMessageToMesos(msg proto.Message, path string) error {
 	if err != nil {
 		return err
 	}
-	
+
 	if resp != nil && resp.StatusCode != http.StatusAccepted {
 		return fmt.Errorf("status code %d received while posting to: %s", resp.StatusCode, url)
 	}
 	return nil
 }
 
+// InitEndpoints init mesos endpoints of core
 func (core *Core) InitEndpoints() {
 	core.Endpoints = map[string]map[string]func(w http.ResponseWriter, r *http.Request) error{
 		"POST": {
 			"/core/mesos.internal.FrameworkRegisteredMessage": core.FrameworkRegisteredMessage,
-			"/core/mesos.internal.ResourceOffersMessage": core.ResourceOffersMessage,
-			"/core/mesos.internal.StatusUpdateMessage": core.StatusUpdateMessage,
+			"/core/mesos.internal.ResourceOffersMessage":      core.ResourceOffersMessage,
+			"/core/mesos.internal.StatusUpdateMessage":        core.StatusUpdateMessage,
 		},
 	}
 }
 
+// FrameworkRegisteredMessage is the api that called when framework register to mesos-master
 func (core *Core) FrameworkRegisteredMessage(w http.ResponseWriter, r *http.Request) error {
 	defer r.Body.Close()
-    data, err:= ioutil.ReadAll(r.Body)
+	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		return err
 	}
@@ -81,9 +85,10 @@ func (core *Core) FrameworkRegisteredMessage(w http.ResponseWriter, r *http.Requ
 	return nil
 }
 
+// ResourceOffersMessage is the api that called when framework receive offers from master
 func (core *Core) ResourceOffersMessage(w http.ResponseWriter, r *http.Request) error {
 	defer r.Body.Close()
-    data, err:= ioutil.ReadAll(r.Body)
+	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		return err
 	}
@@ -103,9 +108,10 @@ func (core *Core) ResourceOffersMessage(w http.ResponseWriter, r *http.Request) 
 	return nil
 }
 
+// StatusUpdateMessage called when slave's status updated
 func (core *Core) StatusUpdateMessage(w http.ResponseWriter, r *http.Request) error {
 	defer r.Body.Close()
-    data, err:= ioutil.ReadAll(r.Body)
+	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		return err
 	}

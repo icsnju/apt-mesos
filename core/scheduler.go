@@ -7,6 +7,7 @@ import (
 	"github.com/icsnju/apt-mesos/registry"
 )
 
+// ScheduleTask decide which offer to run task
 func (core *Core) ScheduleTask(offers []*mesosproto.Offer, resources []*mesosproto.Resource, task *registry.Task) (*mesosproto.Offer, error) {
 	for _, offer := range offers {
 		if ScalarResource("cpus", offer) >= task.Cpus && ScalarResource("mem", offer) >= task.Mem && ScalarResource("disk", offer) >= task.Disk {

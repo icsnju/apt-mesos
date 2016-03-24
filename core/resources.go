@@ -1,7 +1,6 @@
 package core
 
 import (
-	// "github.com/mesos/mesos-go/mesosutil"
 	"github.com/icsnju/apt-mesos/mesosproto"
 )
 
@@ -13,7 +12,8 @@ func createScalarResource(name string, value float64) *mesosproto.Resource {
 	}
 }
 
-func ScalarResource(name string, offer *mesosproto.Offer) float64{
+// ScalarResource count scalar of specific type offer
+func ScalarResource(name string, offer *mesosproto.Offer) float64 {
 	for _, resource := range offer.GetResources() {
 		if resource.GetName() == name {
 			return resource.Scalar.GetValue()
@@ -22,7 +22,7 @@ func ScalarResource(name string, offer *mesosproto.Offer) float64{
 	return 0
 }
 
-
+// BuildResources build Resource struct of given resource constraint
 // TODO Check whether the resources is enough or not
 func (core *Core) BuildResources(cpus, mem, disk float64) []*mesosproto.Resource {
 	var resources = []*mesosproto.Resource{}
@@ -41,4 +41,3 @@ func (core *Core) BuildResources(cpus, mem, disk float64) []*mesosproto.Resource
 
 	return resources
 }
-

@@ -50,7 +50,7 @@ func main() {
 	}
 
 	// create registry
-	registry := registry.NewTaskRegistry()
+	registry := registry.NewRegistry()
 
 	// start a new core
 	core := core.NewCore(addr, master, frameworkInfo, log)

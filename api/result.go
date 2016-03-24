@@ -1,25 +1,27 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
-	"encoding/json"
 )
 
+// MarshalError
 const (
 	MarshalError = `{"success":false,"error":"Cannot marshal json data.","result":null}`
 )
+
 // Result will be converted to json string and write to http.ResponseWriter.
 type Result struct {
-	Success   bool                 `json:"success"`
-	Error     error                `json:"error"` // error to show to user
-	Result    interface{}          `json:"result"`
+	Success bool        `json:"success"`
+	Error   error       `json:"error"` // error to show to user
+	Result  interface{} `json:"result"`
 }
 
-// Write json to ResponseWriter.
-func (this *Result) Response(w http.ResponseWriter) {
-	
-	b, err := json.Marshal(this)
+// Response write json to ResponseWriter.
+func (result *Result) Response(w http.ResponseWriter) {
+
+	b, err := json.Marshal(result)
 	if err != nil {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Content-Type", "application/json")

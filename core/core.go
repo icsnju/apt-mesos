@@ -2,36 +2,44 @@ package core
 
 import (
 	"net/http"
-	
+
 	"github.com/Sirupsen/logrus"
 	"github.com/icsnju/apt-mesos/mesosproto"
 	"github.com/icsnju/apt-mesos/registry"
 )
 
+// Core has the core function of sher
 type Core struct {
-	addr 			string
-	master  		string
-	frameworkInfo  	*mesosproto.FrameworkInfo
-	events 			Events
-	
-	Log				*logrus.Logger
-	Endpoints		map[string]map[string]func(w http.ResponseWriter, r *http.Request) error
+	addr          string
+	master        string
+	frameworkInfo *mesosproto.FrameworkInfo
+	events        Events
+
+	Log       *logrus.Logger
+	Endpoints map[string]map[string]func(w http.ResponseWriter, r *http.Request) error
 }
 
-func NewCore(addr string, master string, frameworkInfo *mesosproto.FrameworkInfo, log *logrus.Logger) *Core{
+// NewCore returns a new core by given params:
+// 	addr: address of sher
+//	master: address of mesos-master
+// 	frameworkInfo: mesosproto, including framework name, host, id, etc.
+// 	Log: logrus instance
+// 	Endpoints: endpoints of all apis
+//  events:	event channel
+func NewCore(addr string, master string, frameworkInfo *mesosproto.FrameworkInfo, log *logrus.Logger) *Core {
 	core := &Core{
-		addr:			addr,
-		master:			master,
-		frameworkInfo: 	frameworkInfo,
-		Log:			log,
-		Endpoints:		nil,
-		events:			NewEvents(),
+		addr:          addr,
+		master:        master,
+		frameworkInfo: frameworkInfo,
+		events:        NewEvents(),
+		Log:           log,
+		Endpoints:     nil,
 	}
 	core.InitEndpoints()
 	return core
 }
 
-// Framework register to mesos master
+// RegisterFramework register to mesos master
 func (core *Core) RegisterFramework() error {
 	core.Log.WithFields(logrus.Fields{"master": core.master}).Info("Registering framework...")
 
@@ -40,7 +48,7 @@ func (core *Core) RegisterFramework() error {
 	}, "mesos.internal.RegisterFrameworkMessage")
 }
 
-// framework unregister from mesos master
+// UnRegisterFramework framework unregister from mesos master
 func (core *Core) UnRegisterFramework() error {
 	core.Log.WithFields(logrus.Fields{"master": core.master}).Info("Unregistering framework...")
 
@@ -49,13 +57,13 @@ func (core *Core) UnRegisterFramework() error {
 	}, "mesos.internal.UnRegisterFrameworkMessage")
 }
 
-// Send request to master for offers
-func (core *Core) RequestOffers(resources []*mesosproto.Resource) ([]*mesosproto.Offer, error){
+// RequestOffers send request to master for offers
+func (core *Core) RequestOffers(resources []*mesosproto.Resource) ([]*mesosproto.Offer, error) {
 	core.Log.Info("Request offers.")
 
 	var event *mesosproto.Event
 	select {
-		case event = <-core.GetEvent(mesosproto.Event_OFFERS):
+	case event = <-core.GetEvent(mesosproto.Event_OFFERS):
 	}
 	if event == nil {
 		core.Log.Info("send message")
@@ -73,9 +81,10 @@ func (core *Core) RequestOffers(resources []*mesosproto.Resource) ([]*mesosproto
 		event = <-core.GetEvent(mesosproto.Event_OFFERS)
 	}
 	core.Log.Infof("Received %d offer(s).", len(event.Offers.Offers))
-	return event.Offers.Offers, nil	
+	return event.Offers.Offers, nil
 }
 
+// AcceptOffer send message to mesos-master to accept a offer
 func (core *Core) AcceptOffer(offer *mesosproto.Offer, resources []*mesosproto.Resource, task *registry.Task) error {
 	core.Log.WithFields(logrus.Fields{"ID": task.ID, "command": task.Command, "offerId": offer.Id, "dockerImage": task.DockerImage}).Info("Launching task...")
 
@@ -88,10 +97,11 @@ func (core *Core) AcceptOffer(offer *mesosproto.Offer, resources []*mesosproto.R
 			offer.Id,
 		},
 		Filters: &mesosproto.Filters{},
-	}, "mesos.internal.LaunchTasksMessage")	
+	}, "mesos.internal.LaunchTasksMessage")
 }
 
-func (core *Core) DeclineOffer(offer *mesosproto.Offer, task *registry.Task) error{
+// DeclineOffer decline a offer which is not suit for task
+func (core *Core) DeclineOffer(offer *mesosproto.Offer, task *registry.Task) error {
 	core.Log.WithFields(logrus.Fields{"offerId": offer.Id, "slave": offer.GetHostname()}).Debug("Decline offer...")
 
 	return core.SendMessageToMesos(&mesosproto.LaunchTasksMessage{
@@ -101,10 +111,10 @@ func (core *Core) DeclineOffer(offer *mesosproto.Offer, task *registry.Task) err
 			offer.Id,
 		},
 		Filters: &mesosproto.Filters{},
-	}, "mesos.internal.LaunchTasksMessage")	
+	}, "mesos.internal.LaunchTasksMessage")
 }
 
-// LauchTask with specific offer and resources
+// LaunchTask with specific offer and resources
 func (core *Core) LaunchTask(offer *mesosproto.Offer, offers []*mesosproto.Offer, resources []*mesosproto.Resource, task *registry.Task) error {
 	for _, value := range offers {
 		if offer.GetId().GetValue() == value.GetId().GetValue() {
@@ -120,7 +130,7 @@ func (core *Core) LaunchTask(offer *mesosproto.Offer, offers []*mesosproto.Offer
 	return nil
 }
 
-// Kill task with id
+// KillTask kill task with id
 func (core *Core) KillTask(ID string) error {
 	core.Log.WithFields(logrus.Fields{"ID": ID}).Info("Killing task...")
 

@@ -8,63 +8,9 @@ import (
 	"path/filepath"
 )
 
-func (c *Core) getSlavePidAndExecutorId(taskId string) (string, string, error) {
-	data, err := c.GetMetricsData()
-	if err != nil {
-		return "", "", err
-	}
-
-	var (
-		executorId string
-		slaveId    string
-	)
-
-found1:
-	for _, framework := range data.Frameworks {
-		if framework.Id != *c.frameworkInfo.Id.Value {
-			continue
-		}
-		for _, task := range framework.Tasks {
-			if task.Id == taskId {
-				executorId = task.ExecutorId
-				slaveId = task.SlaveId
-				break found1
-			}
-		}
-		for _, task := range framework.CompletedTasks {
-			if task.Id == taskId {
-				executorId = task.ExecutorId
-				slaveId = task.SlaveId
-				break found1
-			}
-		}
-	}
-
-found2:
-	for _, framework := range data.CompletedFrameworks {
-		if framework.Id != *c.frameworkInfo.Id.Value {
-			continue
-		}
-		for _, task := range framework.CompletedTasks {
-			if task.Id == taskId {
-				executorId = task.ExecutorId
-				slaveId = task.SlaveId
-				break found2
-			}
-		}
-	}
-
-	for _, slave := range data.Slaves {
-		if slave.Id == slaveId {
-			return slave.Pid, executorId, nil
-		}
-	}
-
-	return "", "", nil
-}
-
-func (c *Core) getTaskDirectory(slavePid, executorId string) (string, error) {
-	resp, err := http.Get("http://" + slavePid + "/state.json")
+// getTaskDirectory return the directory of a task
+func (c *Core) getTaskDirectory(slavePID, executorID string) (string, error) {
+	resp, err := http.Get("http://" + slavePID + "/state.json")
 	if err != nil {
 		return "", err
 	}
@@ -72,21 +18,21 @@ func (c *Core) getTaskDirectory(slavePid, executorId string) (string, error) {
 	data := struct {
 		Frameworks []struct {
 			Executors []struct {
-				Id        string
+				ID        string
 				Directory string
 			}
 			CompletedExecutors []struct {
-				Id        string
+				ID        string
 				Directory string
 			} `json:"completed_executors"`
-			Id string
+			ID string
 		}
 		CompletedFrameworks []struct {
 			CompletedExecutors []struct {
-				Id        string
+				ID        string
 				Directory string
 			} `json:"completed_executors"`
-			Id string
+			ID string
 		} `json:"completed_frameworks"`
 	}{}
 
@@ -96,27 +42,27 @@ func (c *Core) getTaskDirectory(slavePid, executorId string) (string, error) {
 	resp.Body.Close()
 
 	for _, framework := range data.Frameworks {
-		if framework.Id != *c.frameworkInfo.Id.Value {
+		if framework.ID != *c.frameworkInfo.Id.Value {
 			continue
 		}
 		for _, executor := range framework.Executors {
-			if executor.Id == executorId {
+			if executor.ID == executorID {
 				return executor.Directory, nil
 			}
 		}
 		for _, executor := range framework.CompletedExecutors {
-			if executor.Id == executorId {
+			if executor.ID == executorID {
 				return executor.Directory, nil
 			}
 		}
 	}
 
 	for _, framework := range data.CompletedFrameworks {
-		if framework.Id != *c.frameworkInfo.Id.Value {
+		if framework.ID != *c.frameworkInfo.Id.Value {
 			continue
 		}
 		for _, executor := range framework.CompletedExecutors {
-			if executor.Id == executorId {
+			if executor.ID == executorID {
 				return executor.Directory, nil
 			}
 		}
@@ -145,18 +91,19 @@ func (c *Core) readFile(slavePid, directory, filename string) (string, error) {
 	return data.Data, nil
 }
 
-func (c *Core) ReadFile(taskId string, filenames ...string) (map[string]string, error) {
-	slavePid, executorId, err := c.getSlavePidAndExecutorId(taskId)
+// ReadFile read all given files' content and return a map
+func (c *Core) ReadFile(taskID string, filenames ...string) (map[string]string, error) {
+	slavePID, executorID, err := c.getSlavePIDAndExecutorID(taskID)
 	if err != nil {
 		return nil, err
 	}
-	if slavePid == "" {
+	if slavePID == "" {
 		return nil, fmt.Errorf("cannot get slave PID")
 	}
-	if executorId == "" {
-		executorId = taskId
+	if executorID == "" {
+		executorID = taskID
 	}
-	directory, err := c.getTaskDirectory(slavePid, executorId)
+	directory, err := c.getTaskDirectory(slavePID, executorID)
 	if err != nil {
 		return nil, err
 	}
@@ -164,7 +111,7 @@ func (c *Core) ReadFile(taskId string, filenames ...string) (map[string]string, 
 	var files = make(map[string]string)
 
 	for _, filename := range filenames {
-		file, err := c.readFile(slavePid, directory, filename)
+		file, err := c.readFile(slavePID, directory, filename)
 		if err != nil {
 			return nil, err
 		}
