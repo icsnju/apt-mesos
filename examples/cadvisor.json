@@ -1,8 +1,36 @@
 {
     "name": "cadvisor",
     "docker_image": "google/cadvisor:latest",
-    "cpus": "0.5",
-    "mem": "16",
+    "resources": [
+      {
+        "name": "cpus",
+        "type": "SCALAR",
+        "scalar": {
+          "value": 0.5
+        }
+      },
+      {
+        "name": "mem",
+        "type": "SCALAR",
+        "scalar": {
+          "value": 16
+        }
+      },
+      {
+        "name": "ports",
+        "type": "RANGES",
+        "ranges":
+          {
+            "range": [
+              {
+                "begin": 31000,
+                "end": 31001
+              }
+            ]
+          }
+
+      }
+    ],
     "cmd": "/usr/bin/cadvisor -l",
     "volumes": [
         {

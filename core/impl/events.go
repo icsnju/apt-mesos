@@ -1,9 +1,9 @@
-package core
+package impl
 
 import (
 	"fmt"
 
-	"github.com/Sirupsen/logrus"
+	log "github.com/Sirupsen/logrus"
 	"github.com/icsnju/apt-mesos/mesosproto"
 )
 
@@ -22,16 +22,10 @@ func NewEvents() Events {
 
 // AddEvent add event to events bus
 func (core *Core) AddEvent(eventType mesosproto.Event_Type, event *mesosproto.Event) error {
-	core.Log.WithFields(logrus.Fields{"type": eventType}).Debug("Received event from master.")
+	log.WithFields(log.Fields{"type": eventType}).Debug("Received event from master.")
 	if eventType == mesosproto.Event_OFFERS {
-		core.Log.Debugf("Received %d offer(s).", len(event.Offers.Offers))
-		var offer *mesosproto.Offer
-		for _, offer = range event.Offers.Offers {
-			core.Log.WithFields(logrus.Fields{
-				"offer-slave-id": offer.GetHostname(),
-				"offer-cpu":      ScalarResource("cpus", offer),
-			}).Debug("offers details ")
-		}
+		log.Debugf("Received %d offer(s).", len(event.Offers.Offers))
+		core.updateNodesByOffer(event.Offers.Offers)
 	}
 
 	if c, ok := core.events[eventType]; ok {
@@ -45,7 +39,6 @@ func (core *Core) AddEvent(eventType mesosproto.Event_Type, event *mesosproto.Ev
 func (core *Core) GetEvent(eventType mesosproto.Event_Type) chan *mesosproto.Event {
 	if c, ok := core.events[eventType]; ok {
 		return c
-	} else {
-		return nil
 	}
+	return nil
 }

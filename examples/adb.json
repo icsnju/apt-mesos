@@ -1,0 +1,44 @@
+{
+    "environments": [
+    	{
+    		"name": "adb_server",
+    		"image": "sorccu/adb",
+    		"network": "host",
+    		"port_mappings": [
+    			{
+	    			"container_port": 80,
+	    			"host_port": 8080,
+	    			"protocol": "tcp"
+	    		}
+    		],
+		    "volumes": [
+		        {
+		            "container_path": "/data",
+		            "host_path": "/vagrant",
+		            "mode": "RW"
+		        }
+		    ],
+		    "instance": 1	
+    	}, {
+    		"name": "adb_server",
+    		"image": "sorccu/adb",
+    		"network": "host",
+    		"port_mappings": [],
+		    "volumes": [
+		        {
+		            "container_path": "/data",
+		            "host_path": "/vagrant",
+		            "mode": "RW"
+		        }
+		    ],
+		    "instance": 4
+    	}
+    ],
+    "resources": [
+    	{
+    		"name": "device",
+    		"detect": "adb devices"
+    	}
+    ]
+}
+

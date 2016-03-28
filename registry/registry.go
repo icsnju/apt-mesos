@@ -3,99 +3,89 @@ package registry
 import (
 	"errors"
 	"sync"
-
-	"github.com/icsnju/apt-mesos/mesosproto"
 )
 
-// Error definitions
-var (
-	ErrTaskNotExists = errors.New("Specific task not exist")
-)
-
-// Registry to manager jobs and tasks
+// Registry to manager tasks
 type Registry struct {
 	sync.RWMutex
-	tasks map[string]*Task
+	items map[string]interface{}
 }
 
 // NewRegistry instantiate and return a new Registry
 func NewRegistry() *Registry {
 	return &Registry{
-		tasks: make(map[string]*Task),
+		items: make(map[string]interface{}),
 	}
 }
 
-// AddTask is called when user submit a task and add the task to the registry
-func (registry *Registry) AddTask(id string, task *Task) error {
+// Add is called when user submit a task and add the task to the registry
+func (registry *Registry) Add(id string, item interface{}) error {
 	registry.Lock()
 	defer registry.Unlock()
 
-	registry.tasks[id] = task
+	registry.items[id] = item
 	return nil
 }
 
-// GetTask : Get the task that specified id
-func (registry *Registry) GetTask(id string) (*Task, error) {
+// Exists return if registry has the id
+func (registry *Registry) Exists(id string) bool {
+	_, exists := registry.items[id]
+	return exists
+}
+
+// Get : Get the task that specified id
+func (registry *Registry) Get(id string) interface{} {
 	registry.RLock()
 	defer registry.RUnlock()
 
-	task, exists := registry.tasks[id]
+	item, exists := registry.items[id]
 	if !exists {
-		return nil, ErrTaskNotExists
+		return nil
 	}
 
-	return task, nil
+	return item
 }
 
-// GetAllTasks Return all the tasks in registry
-func (registry *Registry) GetAllTasks() ([]*Task, error) {
+// List Return all the tasks in registry
+func (registry *Registry) List() []interface{} {
 	registry.RLock()
 	defer registry.RUnlock()
 
 	var i = 0
-	result := make([]*Task, len(registry.tasks))
+	result := make([]interface{}, len(registry.items))
 
-	for _, v := range registry.tasks {
+	for _, v := range registry.items {
 		result[i] = v
 		i++
 	}
 
-	return result, nil
+	return result
 }
 
-// DeleteTask Give an id and delete the task
-func (registry *Registry) DeleteTask(id string) error {
+// Delete Give an id and delete the task
+func (registry *Registry) Delete(id string) error {
 	registry.Lock()
 	defer registry.Unlock()
 
-	delete(registry.tasks, id)
+	_, exists := registry.items[id]
+	if !exists {
+		return errors.New("Registry delete error")
+	}
+
+	delete(registry.items, id)
 	return nil
 }
 
-// UpdateTask update a task which give the specfic string and a new struct
-func (registry *Registry) UpdateTask(id string, task *Task) error {
+// Update update a task which give the specfic string and a new struct
+func (registry *Registry) Update(id string, item interface{}) error {
 	registry.Lock()
 	defer registry.Unlock()
 
-	_, exists := registry.tasks[id]
+	_, exists := registry.items[id]
 	if !exists {
-		return ErrTaskNotExists
+		return errors.New("Registry update error")
 	}
 
-	registry.tasks[id] = task
-	return nil
-}
-
-// UpdateTaskState update task's state when a task is running
-func (registry *Registry) UpdateTaskState(id string, state mesosproto.TaskState) error {
-	registry.Lock()
-	defer registry.Unlock()
-
-	_, exists := registry.tasks[id]
-	if !exists {
-		return ErrTaskNotExists
-	}
-
-	registry.tasks[id].State = &state
+	registry.items[id] = item
 	return nil
 }

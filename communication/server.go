@@ -1,13 +1,14 @@
-package server
+package communication
 
 import (
 	"net/http"
 
 	"github.com/go-martini/martini"
-	"github.com/icsnju/apt-mesos/api"
+	clientAPI "github.com/icsnju/apt-mesos/communication/api/client"
+	mesosAPI "github.com/icsnju/apt-mesos/communication/api/mesos"
 	"github.com/icsnju/apt-mesos/core"
-	"github.com/icsnju/apt-mesos/registry"
 	"github.com/martini-contrib/cors"
+	"github.com/prometheus/common/log"
 )
 
 func logger() martini.Handler {
@@ -28,23 +29,23 @@ func recovery() martini.Handler {
 	}
 }
 
-func createRouter(core *core.Core, apis *api.API) martini.Router {
+func createRouter(core core.Core, clientHandlers *clientAPI.Handler, mesosHandlers *mesosAPI.Handler) martini.Router {
 	router := martini.NewRouter()
 
 	// create user endpoints
-	router.Get("/api/handshake", apis.Handshake())
-	router.Get("/api/tasks", apis.ListTasks())
-	router.Post("/api/tasks", apis.AddTask())
-	router.Delete("/api/tasks/:id", apis.DeleteTask())
-	router.Put("/api/tasks/:id/kill", apis.KillTask())
-	router.Get("/api/tasks/:id/file/:file", apis.GetFile())
+	router.Get("/api/handshake", clientHandlers.Handshake())
+	router.Get("/api/tasks", clientHandlers.ListTasks())
+	router.Post("/api/tasks", clientHandlers.AddTask())
+	router.Delete("/api/tasks/:id", clientHandlers.DeleteTask())
+	router.Put("/api/tasks/:id/kill", clientHandlers.KillTask())
+	router.Get("/api/tasks/:id/file/:file", clientHandlers.GetFile())
+	router.Get("/api/nodes", clientHandlers.GetNodes())
 
 	// create monitor endpoints
-	router.Get("/api/system/metrics", apis.SystemMetrics())
-	router.Get("/api/slave/metrics", apis.SlaveMetrics())
+	// router.Get("/api/system/metrics", clientHandlers.SystemMetrics())
 
 	// create mesos endpoints
-	for method, routes := range core.Endpoints {
+	for method, routes := range mesosHandlers.Endpoints {
 		for route, function := range routes {
 			switch method {
 			case "POST":
@@ -62,9 +63,12 @@ func createRouter(core *core.Core, apis *api.API) martini.Router {
 	return router
 }
 
-func ListenAndServe(addr string, registry *registry.Registry, core *core.Core) {
-	apis := api.NewAPI(core, registry)
-	r := createRouter(core, apis)
+// ListenAndServe start the server
+func ListenAndServe(addr string, core core.Core) {
+	log.Infof("REST listening at: http://%v", core.GetAddr())
+	clientHandlers := clientAPI.NewHandler(core)
+	mesosHandlers := mesosAPI.NewHandler(core)
+	r := createRouter(core, clientHandlers, mesosHandlers)
 
 	m := martini.New()
 	m.Use(cors.Allow(&cors.Options{
