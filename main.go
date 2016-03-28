@@ -2,23 +2,16 @@ package main
 
 import (
 	"flag"
-	"os"
 
-	"github.com/Sirupsen/logrus"
-	"github.com/icsnju/apt-mesos/core"
-	"github.com/icsnju/apt-mesos/mesosproto"
-	"github.com/icsnju/apt-mesos/registry"
-	"github.com/icsnju/apt-mesos/server"
+	log "github.com/Sirupsen/logrus"
+	comm "github.com/icsnju/apt-mesos/communication"
+	core "github.com/icsnju/apt-mesos/core/impl"
 )
 
 var (
 	addr   string
 	master string
 	debug  bool
-
-	frameworkName = "apt-mesos"
-	user          = "vagrant"
-	log           = logrus.New()
 )
 
 func init() {
@@ -30,37 +23,17 @@ func init() {
 
 func main() {
 	if debug {
-		log.Level = logrus.DebugLevel
+		log.SetLevel(log.DebugLevel)
 	}
-
-	// get current hostname
-	hostname, err := os.Hostname()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	webuiURL := "http://" + addr
-
-	// create frameworkInfo
-	frameworkInfo := &mesosproto.FrameworkInfo{
-		Name:     &frameworkName,
-		User:     &user,
-		WebuiUrl: &webuiURL,
-		Hostname: &hostname,
-	}
-
-	// create registry
-	registry := registry.NewRegistry()
 
 	// start a new core
-	core := core.NewCore(addr, master, frameworkInfo, log)
+	core := core.NewCore(addr, master)
 
 	// Start HTTP server
-	log.Infof("HTTP Server run on %s", addr)
-	server.ListenAndServe(addr, registry, core)
+	comm.ListenAndServe(addr, core)
 
 	// try to register framework to master
-	if err := core.RegisterFramework(); err != nil {
+	if err := core.Run(); err != nil {
 		log.Fatal(err)
 	}
 

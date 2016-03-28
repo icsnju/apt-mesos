@@ -1,4 +1,4 @@
-package core
+package impl
 
 import (
 	"encoding/json"
@@ -91,8 +91,8 @@ func (c *Core) readFile(slavePid, directory, filename string) (string, error) {
 	return data.Data, nil
 }
 
-// ReadFile read all given files' content and return a map
-func (c *Core) ReadFile(taskID string, filenames ...string) (map[string]string, error) {
+// ReadFiles read all given files' content and return a map
+func (c *Core) ReadFiles(taskID string, filenames ...string) (map[string]string, error) {
 	slavePID, executorID, err := c.getSlavePIDAndExecutorID(taskID)
 	if err != nil {
 		return nil, err

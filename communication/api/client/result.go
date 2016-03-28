@@ -1,4 +1,4 @@
-package api
+package client
 
 import (
 	"encoding/json"
@@ -11,17 +11,17 @@ const (
 	MarshalError = `{"success":false,"error":"Cannot marshal json data.","result":null}`
 )
 
-// Result will be converted to json string and write to http.ResponseWriter.
-type Result struct {
-	Success bool        `json:"success"`
-	Error   error       `json:"error"` // error to show to user
-	Result  interface{} `json:"result"`
-}
-
 // Response write json to ResponseWriter.
-func (result *Result) Response(w http.ResponseWriter) {
+func writeResponse(w http.ResponseWriter, code int, content interface{}) {
+	data := struct {
+		Code    int         `json:"code"`
+		Message interface{} `json:"message"`
+	}{
+		code,
+		content,
+	}
 
-	b, err := json.Marshal(result)
+	message, err := json.Marshal(data)
 	if err != nil {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Content-Type", "application/json")
@@ -33,6 +33,10 @@ func (result *Result) Response(w http.ResponseWriter) {
 
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK) // always return status 200 even if an error occurs
-	w.Write(b)
+	w.WriteHeader(code)
+	w.Write(message)
+}
+
+func writeError(w http.ResponseWriter, err error) {
+	writeResponse(w, http.StatusInternalServerError, err.Error())
 }

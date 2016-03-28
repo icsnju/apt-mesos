@@ -20,18 +20,17 @@ const (
 
 // Task struct
 type Task struct {
-	ID          string                `json:"id"`
-	Name        string                `json:"name"`
-	DockerImage string                `json:"docker_image"`
-	Command     string                `json:"cmd"`
-	Cpus        float64               `json:"cpus,string"`
-	Disk        float64               `json:"disk,string"`
-	Mem         float64               `json:"mem,string"`
-	Arguments   []string              `json:"arguments,omitempty"`
-	State       *mesosproto.TaskState `json:"state,string"`
-	Volumes     []*Volume             `json:"volumes,omitempty"`
-	Ports       []*Port               `json:"port_mappings,omitempty"`
-	NetworkMode string                `json:"network_mode"`
+	ID          string                 `json:"id"`
+	Name        string                 `json:"name"`
+	DockerImage string                 `json:"docker_image"`
+	Command     string                 `json:"cmd"`
+	Resources   []*mesosproto.Resource `json:"resources,omitempty"`
+	SLA         string                 `json:"sla"`
+	Arguments   []string               `json:"arguments,omitempty"`
+	State       *mesosproto.TaskState  `json:"state,string"`
+	Volumes     []*Volume              `json:"volumes,omitempty"`
+	Ports       []*Port                `json:"port_mappings,omitempty"`
+	NetworkMode string                 `json:"network_mode"`
 
 	DockerID      string
 	DockerName    string
@@ -47,8 +46,5 @@ func TestTask(id string) *Task {
 		ID:          id,
 		DockerImage: "ubuntu",
 		Command:     "echo `hello sher`",
-		Cpus:        0.5,
-		Disk:        0,
-		Mem:         16,
 	}
 }
