@@ -178,6 +178,8 @@ func (core *Core) updateTasksByMetrics(metrics *registry.MetricsData) {
 						taskInfo.ExecutorID = taskInfo.ID
 					}
 				}
+				// update state
+				taskInfo.State = task.State
 				// get slaveID
 				if taskInfo.SlaveID == "" {
 					taskInfo.SlaveID = task.SlaveID

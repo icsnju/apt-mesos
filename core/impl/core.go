@@ -238,6 +238,7 @@ func (core *Core) CreateTaskInfo(offer *mesosproto.Offer, resources []*mesosprot
 			Mode:          &mode,
 		})
 	}
+	log.Debug(task.Ports)
 	for _, port := range task.Ports {
 		dockerInfo.PortMappings = append(dockerInfo.PortMappings, &mesosproto.ContainerInfo_DockerInfo_PortMapping{
 			ContainerPort: &port.ContainerPort,
@@ -307,6 +308,7 @@ func (core *Core) CreateTaskInfo(offer *mesosproto.Offer, resources []*mesosprot
 // LaunchTask with specific offer and resources
 func (core *Core) LaunchTask(task *registry.Task, node *registry.Node, offers []*mesosproto.Offer) error {
 	core.generateResource(task)
+	log.Debug(task.Resources)
 	resources := scheduler.BuildResources(task)
 	for _, value := range offers {
 		if node.ID == value.GetSlaveId().GetValue() {
