@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	core "github.com/icsnju/apt-mesos/core/impl"
-	"github.com/icsnju/apt-mesos/mesosproto"
 	"github.com/icsnju/apt-mesos/registry"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -70,10 +69,9 @@ func TestDeleteTask(t *testing.T) {
 func TestGetUnscheduledTask(t *testing.T) {
 	Convey("get unshceduled task", t, func() {
 		c.AddTask("1", task)
-		staging := mesosproto.TaskState_TASK_STAGING
 		c.AddTask("2", &registry.Task{
 			ID:    "2",
-			State: &staging,
+			State: "TASK_STAGING",
 		})
 		tasks := c.GetUnScheduledTask()
 		So(len(tasks), ShouldEqual, 1)

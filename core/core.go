@@ -32,6 +32,7 @@ type Core interface {
 	ExistsNode(id string) bool
 	GetAllNodes() []*registry.Node
 
-	GetMetrics() (*registry.Metrics, map[string]mesosproto.TaskState, error)
-	ReadFiles(taskID string, filenames ...string) (map[string]string, error)
+	ReadFile(id string, filename string) (string, error)
+
+	MergePorts(ports []*registry.Port) *mesosproto.Resource
 }

@@ -37,17 +37,9 @@ type MetricsData struct {
 		} `json:"completed_tasks"`
 		ID string
 	}
-	CompletedFrameworks []struct {
-		CompletedTasks []struct {
-			ExecutorID string `json:"executor_id"`
-			ID         string
-			SlaveID    string `json:"slave_id"`
-		} `json:"completed_tasks"`
-		ID string
-	} `json:"completed_frameworks"`
 	Slaves []struct {
 		ID        string
-		Pid       string
+		PID       string
 		Hostname  string
 		Resources struct {
 			Cpus float64

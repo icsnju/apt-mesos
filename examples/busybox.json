@@ -1,0 +1,28 @@
+{
+    "name": "busybox",
+    "docker_image": "busybox",
+    "resources": [
+      {
+        "name": "cpus",
+        "type": "SCALAR",
+        "scalar": {
+          "value": 0.5
+        }
+      },
+      {
+        "name": "mem",
+        "type": "SCALAR",
+        "scalar": {
+          "value": 16
+        }
+      },
+    ],
+    "cmd": "ls",
+    "volumes": [
+        {
+            "host_path":"/vagrant",
+            "container_path":"/data",
+            "mode":"ro"
+        },
+    ],
+}
