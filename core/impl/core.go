@@ -102,6 +102,7 @@ func (core *Core) Run() error {
 	}
 
 	time.Sleep(1 * time.Second)
+	go core.monitor()
 	go core.schedule()
 	return nil
 }
@@ -123,7 +124,7 @@ func (core *Core) schedule() {
 			}
 		} else {
 			// log.Debug("Task registry has no task, sleep for a while...")
-			time.Sleep(3 * time.Second)
+			time.Sleep(1 * time.Second)
 		}
 	}
 }
@@ -237,6 +238,7 @@ func (core *Core) CreateTaskInfo(offer *mesosproto.Offer, resources []*mesosprot
 			Mode:          &mode,
 		})
 	}
+	log.Debug(task.Ports)
 	for _, port := range task.Ports {
 		dockerInfo.PortMappings = append(dockerInfo.PortMappings, &mesosproto.ContainerInfo_DockerInfo_PortMapping{
 			ContainerPort: &port.ContainerPort,
@@ -305,14 +307,15 @@ func (core *Core) CreateTaskInfo(offer *mesosproto.Offer, resources []*mesosprot
 
 // LaunchTask with specific offer and resources
 func (core *Core) LaunchTask(task *registry.Task, node *registry.Node, offers []*mesosproto.Offer) error {
+	core.generateResource(task)
+	log.Debug(task.Resources)
 	resources := scheduler.BuildResources(task)
 	for _, value := range offers {
 		if node.ID == value.GetSlaveId().GetValue() {
 			if err := core.AcceptOffer(value, resources, task); err != nil {
 				return err
 			}
-			stagingState := mesosproto.TaskState_TASK_STAGING
-			task.State = &stagingState
+			task.State = "TASK_STAGING"
 			core.UpdateTask(task.ID, task)
 		} else {
 			if err := core.DeclineOffer(value, task); err != nil {

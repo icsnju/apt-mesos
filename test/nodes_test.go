@@ -11,7 +11,6 @@ var (
 	node = &registry.Node{
 		ID:       "1",
 		Hostname: "node1",
-		IP:       "192.168.33.1",
 	}
 )
 
@@ -54,7 +53,6 @@ func TestUpdateNode(t *testing.T) {
 		node := &registry.Node{
 			ID:       "1",
 			Hostname: "node2",
-			IP:       "192.168.33.2",
 		}
 		err := c.UpdateNode("1", node)
 		So(err, ShouldBeNil)

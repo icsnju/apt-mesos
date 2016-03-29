@@ -22,20 +22,26 @@ const (
 type Task struct {
 	ID          string                 `json:"id"`
 	Name        string                 `json:"name"`
+	Cpus        float64                `json:"cpus"`
+	Mem         float64                `json:"mem"`
+	Disk        float64                `json:"disk"`
 	DockerImage string                 `json:"docker_image"`
 	Command     string                 `json:"cmd"`
 	Resources   []*mesosproto.Resource `json:"resources,omitempty"`
 	SLA         string                 `json:"sla"`
 	Arguments   []string               `json:"arguments,omitempty"`
-	State       *mesosproto.TaskState  `json:"state,string"`
+	State       string                 `json:"state"`
 	Volumes     []*Volume              `json:"volumes,omitempty"`
 	Ports       []*Port                `json:"port_mappings,omitempty"`
 	NetworkMode string                 `json:"network_mode"`
 
 	DockerID      string
 	DockerName    string
-	SlaveID       string `json:"slave_id,string"`
+	SlaveID       string `json:"slave_id"`
 	SlaveHostname string `json:"slave_hostname"`
+	SlavePID      string `json:"slave_pid"`
+	ExecutorID    string `json:"executor_id"`
+	Directory     string `json:"directory"`
 	CreatedTime   int64  `json:"create_time"`
 	TaskInfo      *mesosproto.TaskInfo
 }

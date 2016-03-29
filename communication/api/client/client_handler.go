@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/go-martini/martini"
@@ -64,6 +65,8 @@ func (h *Handler) AddTask() martini.Handler {
 			return
 		}
 		task.ID = hex.EncodeToString(id)
+		task.CreatedTime = time.Now().Unix()
+		log.Debugf("Receive task: %v", task)
 
 		err = h.core.AddTask(task.ID, task)
 		if err != nil {
@@ -123,38 +126,14 @@ func (h *Handler) GetNodes() martini.Handler {
 	}
 }
 
-// SystemMetrics is the endpoints to get system metrics data
-// method:		GET
-// path:		/api/system/metrics
-// func (h *Handler) SystemMetrics() martini.Handler {
-// 	return func(w http.ResponseWriter, r *http.Request, params martini.Params) {
-// 		var metrics *registry.Metrics
-// 		metrics, states, err := h.core.GetMetrics()
-// 		if err != nil {
-// 			writeError(w, err)
-// 			return
-// 		}
-//
-// 		for id, state := range states {
-// 			// h.core.UpdateTaskState(id, state)
-// 		}
-// 		writeResponse(w, http.StatusOK, metrics)
-// 	}
-// }
-
 // GetFile get the file content
 func (h *Handler) GetFile() martini.Handler {
 	return func(w http.ResponseWriter, r *http.Request, params martini.Params) {
 		id := params["id"]
 		file := params["file"]
 
-		files, err := h.core.ReadFiles(id, []string{file}...)
+		content, err := h.core.ReadFile(id, file)
 		if err != nil {
-			writeError(w, err)
-			return
-		}
-		content, ok := files[file]
-		if !ok {
 			writeError(w, err)
 			return
 		}

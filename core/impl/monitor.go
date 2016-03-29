@@ -3,6 +3,7 @@ package impl
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/icsnju/apt-mesos/registry"
 )
@@ -21,4 +22,16 @@ func (core *Core) FetchMetricData() (*registry.MetricsData, error) {
 	resp.Body.Close()
 
 	return data, nil
+}
+
+// Monitor fetch mesos state and update task info
+func (core *Core) monitor() {
+	for {
+		data, err := core.FetchMetricData()
+		if err != nil {
+			return
+		}
+		core.updateTasksByMetrics(data)
+		time.Sleep(1 * time.Second)
+	}
 }
