@@ -80,6 +80,7 @@ func (h *Handler) StatusUpdateMessage(w http.ResponseWriter, r *http.Request) er
 	message := &mesosproto.StatusUpdateMessage{}
 	if err := proto.Unmarshal(data, message); err != nil {
 		log.Errorf("Failed to unmarshal message %v\n", "mesos.internal.StatusUpdateMessage")
+		log.Println(string(data))
 		return err
 	}
 	h.core.HandleStatusUpdateMessage(message)

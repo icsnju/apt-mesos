@@ -26,7 +26,7 @@ angular.module('sher.task')
             // 刷新任务
             refresh: function() {
                 return getTasks(function(response) {
-                    tasks = response.result
+                    tasks = response.message
                     for(var i = 0; i < tasks.length; i++) {
                         switch (parseInt(tasks[i].state)) {
                             case 0:

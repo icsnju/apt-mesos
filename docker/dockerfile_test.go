@@ -4,14 +4,17 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-    "github.com/icsnju/apt-mesos/docker"
+	"github.com/icsnju/apt-mesos/docker"
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestParse(t *testing.T) {
-    fmt.Println(1)
-	dockerfile := docker.NewDockerfile("../examples/Dockerfile", "icsnju")
-    out := dockerfile.Build()
-    fmt.Println(out)
-    assert.NotNil(t, dockerfile)
+	Convey("parse dockerfile", t, func() {
+		dockerfile := docker.NewDockerfile("../examples/Dockerfile", "icsnju")
+		out := dockerfile.Build()
+		fmt.Println(out)
+		So(dockerfile, ShouldNotBeNil)
+		So(dockerfile.HasLocalSources(), ShouldBeTrue)
+		dockerfile.BuildContext()
+	})
 }

@@ -1,31 +1,21 @@
-package main
+package docker
 
 import (
-	"log"
-	"time"
-	"bytes"
-	"archive/tar"
+	"fmt"
+
 	"github.com/fsouza/go-dockerclient"
 )
 
 func main() {
-	client, err := docker.NewClient("http://192.168.99.1:5243")
-	if err != nil {
-		log.Fatal(err)
+	endpoint := "unix:///var/run/docker.sock"
+	client, _ := docker.NewClient(endpoint)
+	imgs, _ := client.ListImages(docker.ListImagesOptions{All: false})
+	for _, img := range imgs {
+		fmt.Println("ID: ", img.ID)
+		fmt.Println("RepoTags: ", img.RepoTags)
+		fmt.Println("Created: ", img.Created)
+		fmt.Println("Size: ", img.Size)
+		fmt.Println("VirtualSize: ", img.VirtualSize)
+		fmt.Println("ParentId: ", img.ParentID)
 	}
-
-	t := time.Now()
-	inputbuf, outputbuf := bytes.NewBuffer(nil), bytes.NewBuffer(nil)
-	tr := tar.NewWriter(inputbuf)
-	tr.WriteHeader(&tar.Header{Name: "Dockerfile", Size: 10, ModTime: t, AccessTime: t, ChangeTime: t})
-	tr.Write([]byte("FROM base\n"))
-	tr.Close()
-	opts := docker.BuildImageOptions{
-	    Name:         "test",
-	    InputStream:  inputbuf,
-	    OutputStream: outputbuf,
-	}
-	if err := client.BuildImage(opts); err != nil {
-	    log.Fatal(err)
-	}	
 }

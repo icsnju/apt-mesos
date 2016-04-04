@@ -202,6 +202,11 @@ func (core *Core) updateTasksByMetrics(metrics *registry.MetricsData) {
 			} else {
 				if task.SlaveID == slave.ID {
 					task.SlavePID = slave.PID
+					upid, err := comm.Parse(task.SlavePID)
+					if err != nil {
+						continue
+					}
+					task.SlaveHost = upid.Host
 				}
 			}
 		}

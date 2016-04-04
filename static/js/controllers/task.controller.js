@@ -70,8 +70,8 @@ function($scope, $http, $timeout, $state, $stateParams, $uibModal, Tasks) {
             windowTemplateUrl: '/js/components/modal/console.window.html',
             resolve: {
                 "task": task,
-            }    
-        })    
+            }
+        })
     }
 
     // 加载任务, 定时监控
@@ -147,10 +147,10 @@ var TaskModalCtrl = function ($scope, $uibModalInstance, Tasks) {
 var LogModalCtrl = function ($scope, $uibModalInstance, Tasks, task) {
     // 默认在logtab下
     $scope.logTab = 'stderr';
-    consoleLog('stderr')     
+    consoleLog('stderr')
 
     $scope.console = function(file) {
-        consoleLog(file)     
+        consoleLog(file)
     };
 
     $scope.refresh = function(file) {
@@ -160,7 +160,7 @@ var LogModalCtrl = function ($scope, $uibModalInstance, Tasks, task) {
     function consoleLog(file) {
         $scope.logTab = file;
         Tasks.getTaskFile(task.id, file, function(response){
-            $scope.logs = response.result.split('\n');
-        });    
+            $scope.logs = response.message.split('\n');
+        });
     }
 };

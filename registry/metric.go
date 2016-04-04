@@ -2,9 +2,9 @@ package registry
 
 // Metrics provide some useful metrics to frontend
 type Metrics struct {
-	TotalCpus    float64 `json:"total_cpus"`
-	TotalMem     float64 `json:"total_mem"`
-	TotalDisk    float64 `json:"total_disk"`
+	FreeCpus     float64 `json:"free_cpus"`
+	FreeMem      float64 `json:"free_mem"`
+	FreeDisk     float64 `json:"free_disk"`
 	UsedCpus     float64 `json:"used_cpus"`
 	UsedMem      float64 `json:"used_mem"`
 	UsedDisk     float64 `json:"used_disk"`

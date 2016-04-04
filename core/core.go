@@ -33,6 +33,7 @@ type Core interface {
 	GetAllNodes() []*registry.Node
 
 	ReadFile(id string, filename string) (string, error)
+	GetSystemUsage() *registry.Metrics
 
 	MergePorts(ports []*registry.Port) *mesosproto.Resource
 }

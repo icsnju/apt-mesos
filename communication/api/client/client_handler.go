@@ -78,6 +78,22 @@ func (h *Handler) AddTask() martini.Handler {
 	}
 }
 
+// GetTask return a task
+// method:		GET
+// path:		/api/task/:id
+func (h *Handler) GetTask() martini.Handler {
+	return func(w http.ResponseWriter, r *http.Request, params martini.Params) {
+		id := params["id"]
+
+		task, err := h.core.GetTask(id)
+		if err != nil {
+			writeError(w, err)
+		}
+
+		writeResponse(w, http.StatusOK, task)
+	}
+}
+
 // KillTask kill a task which is running
 // method:		PUT
 // path:		/api/tasks/:taskId/kill
@@ -139,5 +155,14 @@ func (h *Handler) GetFile() martini.Handler {
 		}
 
 		writeResponse(w, http.StatusOK, content)
+	}
+}
+
+//
+func (h *Handler) SystemUsage() martini.Handler {
+	return func(w http.ResponseWriter, r *http.Request, params martini.Params) {
+		metric := h.core.GetSystemUsage()
+
+		writeResponse(w, http.StatusOK, metric)
 	}
 }
