@@ -716,7 +716,7 @@ h1, h2, h3, h4, h5, p {
       background-color: #181a1e; }
   .sidebar .nav-label {
     font-size: 14px;
-    font-weight: 100;
+    font-weight: 200;
     margin-left: 10px; }
 
 .mini-navbar .sidebar {
@@ -808,7 +808,7 @@ table.tasks tr td {
     color: #285f8f !important; }
 
 .mailbox-main {
-  min-height: 480px; }
+  min-height: 400px; }
 
 ins {
   background-color: #c6ffc6;
@@ -1007,43 +1007,15 @@ ins {
   font-size: 18px;
   font-weight: 300; }
 
-.console .modal-header {
-  padding: 0;
-  border: 0;
-  background-color: #f7f6fa;
-  position: relative; }
-  .console .modal-header .nav-tabs li {
-    margin-bottom: -2px;
-    border-right: 1px solid #ddd; }
-    .console .modal-header .nav-tabs li a {
-      font-size: 14px;
-      padding: 12px 30px;
-      margin-right: 0;
-      border: 0;
-      border-bottom: 2px solid transparent; }
-      .console .modal-header .nav-tabs li a i {
-        color: #4a89dc;
-        margin-right: 5px; }
-    .console .modal-header .nav-tabs li:active a {
-      color: #ccc;
-      border-bottom-color: #4a89dc; }
+.tabsdemoDynamicHeight md-content {
+  background-color: transparent !important; }
 
-.console .modal-body {
-  max-height: 500px;
-  overflow-y: scroll;
-  font-size: 12px; }
+.tabsdemoDynamicHeight md-content md-tabs {
+  background: #f6f6f6;
+  border: 1px solid #e1e1e1; }
 
-.log-line {
-  padding: 5px 10px;
-  border-radius: 2px;
-  -webkit-transition: background-color,ease,.2s;
-  -moz-transition: background-color,ease,.2s;
-  transition: background-color,ease,.2s; }
-  .log-line:hover {
-    background-color: #eee; }
+.tabsdemoDynamicHeight md-content md-tabs md-tabs-wrapper {
+  background: white; }
 
-.log-refresh {
-  position: absolute;
-  right: 10px;
-  font-size: 25px;
-  top: 10px; }
+.tabsdemoDynamicHeight md-content h1:first-child {
+  margin-top: 0; }

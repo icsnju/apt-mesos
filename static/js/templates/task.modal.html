@@ -36,7 +36,7 @@
                         <div class="panel panel-default">
                             <div class="panel-heading clickable">
                                 <div class="panel-title">
-                                    <a data-toggle="collapse" href=".DockerSetting" aria-expanded="true"><span class="si-angle-right"></span>Docker settings</a>
+                                    <a data-toggle="collapse" id="dockerSetBtn" aria-expanded="true"><span class="si-angle-right"></span>Docker settings</a>
 
                                 </div>
                             </div>
@@ -65,21 +65,21 @@
                                         <div class="col-sm-4">
                                             <div class="form-group">
                                                 <label class="control-label">Container Port</label>
-                                                <div><input type="text" ng-model="port_mapping.container_port" onkeyup="this.value=this.value.replace(/[^\d]/g,'')" onpaste="return false"  class="form-control"></div>
+                                                <div><input type="text" ng-model="port_mapping.container_port" class="form-control"></div>
                                             </div>
                                         </div>
                                         <div class="col-sm-4">
                                             <div class="form-group">
                                                 <label class="control-label">Host Port</label>
-                                                <div><input type="text" ng-model="port_mapping.host_port" onkeyup="this.value=this.value.replace(/[^\d]/g,’’)" onpaste="return false" class="form-control"></div>
+                                                <div><input type="text" ng-model="port_mapping.host_port" class="form-control"></div>
                                             </div>
                                         </div>
                                         <div class="col-sm-4">
                                             <div class="form-group">
                                                 <label class="control-label">Host Port</label>
                                                 <div><select type="text" ng-model="port_mapping.protocol" class="form-control">
-                                                    <option value="tcp">tcp</option>
-                                                    <option value="udp">udp</option>
+                                                    <option value="TCP">TCP</option>
+                                                    <option value="UDP">UDP</option>
                                                 </select></div>
                                             </div>
                                             <div class="controls">

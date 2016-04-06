@@ -1,0 +1,60 @@
+<div id="overview" class="animated fadeInRight">
+	<div class="ibox">
+		<div class="ibox-title">
+			<h2>Overview</h2>
+		</div>
+		<div class="ibox-content">
+			<div class="row" ng-controller="pieCtrl">
+				<div class="col-sm-4">
+					<h3 style="margin-left:60px">CPU</h3>
+					<canvas id="pcpu" class="chart chart-doughnut" 
+					  chart-data="cpus" chart-labels="labels" chart-legend="false">
+					</canvas>
+				</div>
+				<div class="col-sm-4">
+					<h3 style="margin-left:60px">MEM</h3>
+					<canvas id="pmem" class="chart chart-doughnut" 
+					  chart-data="mem" chart-labels="labels" chart-legend="false">
+					</canvas> 
+				</div>
+				<div class="col-sm-4">
+					<h3 style="margin-left:60px">NET</h3>
+					<canvas id="pnet" class="chart chart-doughnut" 
+					  chart-data="disk" chart-labels="labels" chart-legend="false">
+					</canvas> 
+				</div>				
+			</div>
+		</div>
+	</div>
+	<div class="ibox">
+		<div class="ibox-title">
+			<h2>Recent Tasks</h2>
+		</div>
+		<div class="ibox-content" ng-controller="tableCtrl">
+			<div class="table-responsive">
+				<table class="table table-striped">
+					<thead>
+					<tr>
+						<th>ID</th>
+						<th>Name</th>
+						<th>Image</th>
+						<th>Slave</th>
+						<th>Cpus</th>
+						<th>Memory</th>
+					</tr>
+					</thead>
+					<tbody>
+					<tr class="read" ng-repeat="task in tasks" ng-click="rowClick(task.id)">
+						<td>{{task.id}}</td>
+						<td class="mail-subject">{{task.name}}</td>
+						<td>{{task.docker_image}}</td>
+						<td>{{task.slave_hostname}}</td>
+						<td>{{task.cpus}}</td>
+						<td>{{task.mem}} MiB</td>
+					</tr>
+					</tbody>
+				</table>
+			</div>			
+		</div>
+	</div>
+</div>

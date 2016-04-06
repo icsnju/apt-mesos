@@ -13,10 +13,12 @@ function SmoothlyMenu() {
 
 $(document).ready(function() {
     // 边栏缩小
-    $(".navbar-minimalize").click(function() {
-        $("body").toggleClass("mini-navbar"),
-            SmoothlyMenu()
+    $(document).on("click", ".navbar-minimalize", function() {
+        $("body").toggleClass("mini-navbar");
+        SmoothlyMenu();
     })
 
-
+    $(document).on("click", "#dockerSetBtn", function() {
+        $("#DockerSetting").toggle(500);
+    });    
 })
