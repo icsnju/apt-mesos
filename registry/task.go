@@ -38,6 +38,7 @@ type Task struct {
 	DockerID      string
 	DockerName    string
 	SlaveID       string `json:"slave_id"`
+	SlaveHost     string `json:"slave_host"`
 	SlaveHostname string `json:"slave_hostname"`
 	SlavePID      string `json:"slave_pid"`
 	ExecutorID    string `json:"executor_id"`

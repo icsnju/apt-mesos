@@ -1,10 +1,6 @@
-/**
- * Created by jeff on 16/3/9.
- */
-var API = "http://192.168.33.1:3030/api";
+var API = 'http://192.168.33.1:3030/api';
 
 angular.module('sher.task')
-
     .factory('Tasks', ['$resource', '$http', function($resource, $http) {
         var tasks = [];
         var resource = $resource(API + '/tasks', {}, {
@@ -26,42 +22,7 @@ angular.module('sher.task')
             // 刷新任务
             refresh: function() {
                 return getTasks(function(response) {
-                    tasks = response.result
-                    for(var i = 0; i < tasks.length; i++) {
-                        switch (parseInt(tasks[i].state)) {
-                            case 0:
-                                tasks[i].status="STARTING";
-                                tasks[i].label_class="info";
-                                break;
-                            case 1:
-                                tasks[i].status="RUNNING";
-                                tasks[i].label_class="info";
-                                break;
-                            case 2:
-                                tasks[i].status="FINISHED";
-                                tasks[i].label_class="success";
-                                break;
-                            case 3:
-                                tasks[i].status="FAILED";
-                                tasks[i].label_class="danger";
-                                break;
-                            case 4:
-                                tasks[i].status="KILLED";
-                                tasks[i].label_class="warning";
-                                break;
-                            case 5:
-                                tasks[i].status="LOST";
-                                tasks[i].label_class="default";
-                                break;
-                            case 6:
-                                tasks[i].status="STAGING";
-                                tasks[i].label_class="primary";
-                                break;
-                        }
-                    }
-                    tasks.sort(function(a, b) {
-                        return b.create_time - a.create_time;
-                    })
+                    tasks = handleTasks(response.message);
                 })
             },
 
@@ -119,16 +80,6 @@ angular.module('sher.task')
                 });
             },
 
-            // 监控任务
-            monitor: function(callback) {
-                $http({
-                    method: 'GET',
-                    url: API + '/system/metrics',
-                }).success(function(response) {
-                    return callback && callback(response);
-                });
-            },
-
             // 删除任务
             deleteTask: function(id, callback) {
                 $http({
@@ -149,6 +100,7 @@ angular.module('sher.task')
                 })
             },
 
+            // 读取任务输出
             getTaskFile: function(id, file, callback) {
                 $http({
                     method: 'GET',
@@ -156,6 +108,54 @@ angular.module('sher.task')
                 }).success(function(response) {
                     return callback && callback(response);
                 })
-            }
+            },
+
+            systemUsage: function(callback) {
+                $http({
+                    method: 'GET',
+                    url: API + '/system/usage'
+                }).success(function(response) {
+                    return callback && callback(response);
+                })
+            }   
+
         }
-    }])
+    }]);
+
+function handleTasks(tasks) {
+    for(var i = 0; i < tasks.length; i++) {
+        // 转换状态
+        switch (tasks[i].state) {
+            case "TASK_STAGING":
+                tasks[i].status="STARTING";
+                tasks[i].label_class="primary";
+                break;
+            case "TASK_RUNNING":
+                tasks[i].status="RUNNING";
+                tasks[i].label_class="info";
+                break;
+            case "TASK_FINISHED":
+                tasks[i].status="FINISHED";
+                tasks[i].label_class="success";
+                break;
+            case "TASK_FAILED":
+                tasks[i].status="FAILED";
+                tasks[i].label_class="danger";
+                break;
+            case "TASK_KILLED":
+                tasks[i].status="KILLED";
+                tasks[i].label_class="warning";
+                break;
+            case "TASK_LOST":
+                tasks[i].status="LOST";
+                tasks[i].label_class="default";
+                break;
+        }
+    }
+
+    tasks.sort(function(a, b) {
+        return b.create_time - a.create_time;
+    })
+
+    return tasks
+} 
