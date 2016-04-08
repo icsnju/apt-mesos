@@ -10,6 +10,7 @@ type Core interface {
 	Run() error
 	GetAddr() string
 	GetListenIPAndPort() (string, string, error)
+	GetAgentLisenPort() string
 
 	HandleFrameworkRegisteredMessage(message *mesosproto.FrameworkRegisteredMessage)
 	HandleResourceOffersMessage(message *mesosproto.ResourceOffersMessage)
@@ -18,6 +19,7 @@ type Core interface {
 	RequestOffers() ([]*mesosproto.Offer, error)
 	LaunchTask(task *registry.Task, node *registry.Node, offers []*mesosproto.Offer) error
 
+	// Task manage
 	AddTask(id string, task *registry.Task) error
 	GetAllTasks() []*registry.Task
 	GetTask(id string) (*registry.Task, error)
@@ -25,6 +27,7 @@ type Core interface {
 	KillTask(id string) error
 	GetUnScheduledTask() []*registry.Task
 
+	// Node manage
 	RegisterNode(id string, node *registry.Node) error
 	GetNode(id string) (*registry.Node, error)
 	UpdateNode(id string, node *registry.Node) error
@@ -34,6 +37,5 @@ type Core interface {
 
 	ReadFile(id string, filename string) (string, error)
 	GetSystemUsage() *registry.Metrics
-
 	MergePorts(ports []*registry.Port) *mesosproto.Resource
 }

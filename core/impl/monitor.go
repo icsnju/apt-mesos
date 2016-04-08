@@ -32,6 +32,7 @@ func (core *Core) monitor() {
 			return
 		}
 		core.updateTasksByMetrics(data)
+		core.updateNodesByMetrics(data)
 		time.Sleep(1 * time.Second)
 	}
 }

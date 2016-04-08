@@ -4,9 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/icsnju/apt-mesos/mesosproto"
 	"github.com/icsnju/apt-mesos/registry"
-	scheduler "github.com/icsnju/apt-mesos/scheduler/impl"
 )
 
 // ErrNodeNotExists defined errors
@@ -55,48 +53,6 @@ func (core *Core) GetAllNodes() []*registry.Node {
 		nodes[i] = v.(*registry.Node)
 	}
 	return nodes
-}
-
-func (core *Core) updateNodesByOffer(offers []*mesosproto.Offer) {
-	for _, offer := range offers {
-		// update resources
-		resources := make(map[string]*mesosproto.Resource)
-		for _, resource := range offer.GetResources() {
-			resources[resource.GetName()] = resource
-		}
-
-		// if it is a new node
-		slaveID := offer.GetSlaveId().GetValue()
-		if exists := core.ExistsNode(slaveID); !exists {
-			node := &registry.Node{
-				ID:             slaveID,
-				Hostname:       offer.GetHostname(),
-				LastUpdateTime: time.Now().Unix(),
-				Resources:      resources,
-			}
-			core.RegisterNode(slaveID, node)
-		} else {
-			node, _ := core.GetNode(slaveID)
-			node.Resources = resources
-			node.LastUpdateTime = time.Now().Unix()
-			core.UpdateNode(slaveID, node)
-		}
-	}
-}
-
-func (core *Core) updateNodeByTask(id string, task *registry.Task) {
-	node, _ := core.GetNode(id)
-	for _, resource := range task.Resources {
-		// Update scalar
-		if resource.GetType().String() == "SCALAR" {
-			newScalar := node.Resources[resource.GetName()].GetScalar().GetValue() - resource.GetScalar().GetValue()
-			node.Resources[resource.GetName()].Scalar.Value = &newScalar
-		} else if resource.GetType().String() == "RANGES" {
-			// Update ranges
-			node.Resources[resource.GetName()].Ranges = scheduler.RangeUsedUpdate(resource.GetRanges(), node.Resources[resource.GetName()].GetRanges())
-		}
-	}
-	core.UpdateNode(id, node)
 }
 
 func (core *Core) GetSystemUsage() *registry.Metrics {

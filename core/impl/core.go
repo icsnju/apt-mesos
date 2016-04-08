@@ -143,6 +143,11 @@ func (core *Core) GetAddr() string {
 	return core.addr
 }
 
+// GetAgentLisenPort return cadvisor listend port
+func (core *Core) GetAgentLisenPort() string {
+	return "18080"
+}
+
 // GetListenIPAndPort return core listend ip
 func (core *Core) GetListenIPAndPort() (string, string, error) {
 	splits := strings.Split(core.addr, ":")
