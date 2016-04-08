@@ -2,143 +2,14 @@ package impl
 
 import (
 	"encoding/json"
-	"errors"
 	"net/http"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/gogo/protobuf/proto"
+	client "github.com/google/cadvisor/client/v2"
+	info "github.com/google/cadvisor/info/v2"
 	comm "github.com/icsnju/apt-mesos/communication"
-	"github.com/icsnju/apt-mesos/mesosproto"
 	"github.com/icsnju/apt-mesos/registry"
 )
-
-// ErrTaskNotExists defined errors
-var (
-	ErrTaskNotExists             = errors.New("Specific task not exist")
-	ErrBasicResourceNotSatisfied = errors.New("Cpus and mem must be required in resources")
-)
-
-type filter func(task *registry.Task) bool
-
-// AddTask is called when user submit a task and add the task to the registry
-func (core *Core) AddTask(id string, task *registry.Task) error {
-	if err := core.tasks.Add(id, task); err != nil {
-		return err
-	}
-	return nil
-}
-
-// GetAllTasks Return all the tasks in registry
-func (core *Core) GetAllTasks() []*registry.Task {
-	rawList := core.tasks.List()
-	tasks := make([]*registry.Task, len(rawList))
-
-	for i, v := range rawList {
-		tasks[i] = v.(*registry.Task)
-	}
-	return tasks
-}
-
-// GetTask : Get the task that specified id
-func (core *Core) GetTask(id string) (*registry.Task, error) {
-	if task := core.tasks.Get(id); task != nil {
-		return task.(*registry.Task), nil
-	}
-	return nil, ErrTaskNotExists
-}
-
-// DeleteTask give an id and delete the task
-func (core *Core) DeleteTask(id string) error {
-	if err := core.tasks.Delete(id); err != nil {
-		return err
-	}
-	return nil
-}
-
-// UpdateTask update task info
-func (core *Core) UpdateTask(id string, task *registry.Task) error {
-	return core.tasks.Update(id, task)
-}
-
-// KillTask kill the task
-func (core *Core) KillTask(id string) error {
-	if task := core.tasks.Get(id); task == nil {
-		return ErrTaskNotExists
-	}
-	frameworkID := core.frameworkInfo.GetId().GetValue()
-	message := &mesosproto.KillTaskMessage{
-		FrameworkId: &mesosproto.FrameworkID{Value: &frameworkID},
-		TaskId:      &mesosproto.TaskID{Value: &id},
-	}
-	messagePackage := comm.NewMessage(core.masterUPID, message, nil)
-	return comm.SendMessageToMesos(core.coreUPID, messagePackage)
-}
-
-// FilterTask filter task by func
-func (core *Core) FilterTask(choose filter) []*registry.Task {
-	var result []*registry.Task
-	for _, task := range core.tasks.List() {
-		if choose(task.(*registry.Task)) {
-			result = append(result, task.(*registry.Task))
-		}
-	}
-
-	return result
-}
-
-func (core *Core) generateResource(task *registry.Task) {
-	var resources = []*mesosproto.Resource{}
-	resources = append(resources, &mesosproto.Resource{
-		Name:   proto.String("cpus"),
-		Type:   mesosproto.Value_SCALAR.Enum(),
-		Scalar: &mesosproto.Value_Scalar{Value: proto.Float64(task.Cpus)},
-	})
-	resources = append(resources, &mesosproto.Resource{
-		Name:   proto.String("mem"),
-		Type:   mesosproto.Value_SCALAR.Enum(),
-		Scalar: &mesosproto.Value_Scalar{Value: proto.Float64(task.Mem)},
-	})
-	resources = append(resources, &mesosproto.Resource{
-		Name:   proto.String("disk"),
-		Type:   mesosproto.Value_SCALAR.Enum(),
-		Scalar: &mesosproto.Value_Scalar{Value: proto.Float64(task.Disk)},
-	})
-	resources = append(resources, core.MergePorts(task.Ports))
-	task.Resources = resources
-}
-
-func (core *Core) MergePorts(ports []*registry.Port) *mesosproto.Resource {
-	var used = [65536]bool{false}
-	for _, port := range ports {
-		used[port.HostPort] = true
-	}
-	var rangesPort = &mesosproto.Value_Ranges{}
-	for i := 1; i < 65536; i++ {
-		if used[i] {
-			Begin := uint64(i)
-			var rangePort = &mesosproto.Value_Range{
-				Begin: &Begin,
-			}
-			for ; used[i]; i++ {
-			}
-			End := uint64(i - 1)
-			rangePort.End = &End
-			rangesPort.Range = append(rangesPort.Range, rangePort)
-		}
-	}
-	return &mesosproto.Resource{
-		Name:   proto.String("ports"),
-		Type:   mesosproto.Value_RANGES.Enum(),
-		Ranges: rangesPort,
-	}
-}
-
-// GetUnScheduledTask return all un schedulered task
-func (core *Core) GetUnScheduledTask() []*registry.Task {
-	return core.FilterTask(func(task *registry.Task) bool {
-		return task.State == ""
-	})
-}
 
 func (core *Core) updateTasksByMetrics(metrics *registry.MetricsData) {
 	// get executorID, slaveID, slaveHostname of task
@@ -286,4 +157,62 @@ func (core *Core) getTaskDirectory(slavePID, executorID string) (string, error) 
 	}
 
 	return "", nil
+}
+
+func (core *Core) updateTaskByDockerInfo(task *registry.Task, dockerInspectOutput []byte) {
+	//	glog.Infof("Docker Inspect: %s", dockerInspectOutput)
+	var dockerTasks []*registry.DockerTask
+	err := json.Unmarshal(dockerInspectOutput, &dockerTasks)
+	if err != nil {
+		log.Errorf("UpdateTaskWithDockerInfo error: %v\n", err)
+		return
+	}
+	task.DockerID = dockerTasks[0].DockerID
+	task.DockerName = dockerTasks[0].DockerName[1:]
+
+	var dockerState *registry.DockerState
+	err = json.Unmarshal(dockerTasks[0].DockerState, &dockerState)
+	if err != nil {
+		log.Errorf("UpdateTaskWithDockerInfo error: %v\n", err)
+		return
+	}
+
+	task.ProcessID = dockerState.Pid
+}
+
+func (core *Core) updateTasksByCAdvisor() {
+	for _, task := range core.GetAllTasks() {
+		if task.State == "TASK_RUNNING" && task.DockerID != "" && task.SlaveID != "" {
+			node, _ := core.GetNode(task.SlaveID)
+			client, err := client.NewClient("http://" + node.Host + ":" + core.GetAgentLisenPort())
+			if err != nil {
+				log.Errorf("Cannot connect to cadvisor agent: %v", err)
+				continue
+			}
+
+			request := info.RequestOptions{
+				IdType: "docker",
+				Count:  5,
+			}
+			containerInfo, err := client.Stats(task.DockerID, &request)
+			if err != nil {
+				log.Errorf("Fetch container info failed: %v", err)
+			}
+
+			for _, info := range containerInfo {
+				if len(info.Stats) > 1 {
+					lastStats := info.Stats[len(info.Stats)-2]
+					currentStats := info.Stats[len(info.Stats)-1]
+
+					// ms -> ns.
+					timeInterval := float64((currentStats.Timestamp.Unix() - lastStats.Timestamp.Unix()) * 1000000)
+					task.CPUUsage = float64(currentStats.Cpu.Usage.Total-lastStats.Cpu.Usage.Total) / timeInterval
+					task.MemoryUsage = currentStats.Memory.Usage
+				}
+			}
+		} else {
+			task.CPUUsage = 0.0
+			task.MemoryUsage = 0
+		}
+	}
 }

@@ -80,7 +80,6 @@ func (core *Core) updateNodesByMetrics(metrics *registry.MetricsData) {
 		}
 	}
 
-	core.updateNodesByCAdvisor()
 }
 
 // Update node information by CAdvisor
@@ -111,7 +110,7 @@ func (core *Core) updateNodesByCAdvisor() {
 
 			request := info.RequestOptions{
 				IdType:    "docker",
-				Count:     10,
+				Count:     5,
 				Recursive: true,
 			}
 			containerInfo, err := client.Stats("", &request)

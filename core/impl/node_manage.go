@@ -72,15 +72,17 @@ func (core *Core) GetSystemUsage() *registry.Metrics {
 	}
 
 	for _, task := range core.GetAllTasks() {
-		for _, resource := range task.Resources {
-			if resource.GetName() == "cpus" {
-				metrics.UsedCpus += resource.Scalar.GetValue()
-			}
-			if resource.GetName() == "mem" {
-				metrics.UsedMem += resource.Scalar.GetValue()
-			}
-			if resource.GetName() == "disk" {
-				metrics.UsedDisk += resource.Scalar.GetValue()
+		if task.State == "TASK_RUNNING" {
+			for _, resource := range task.Resources {
+				if resource.GetName() == "cpus" {
+					metrics.UsedCpus += resource.Scalar.GetValue()
+				}
+				if resource.GetName() == "mem" {
+					metrics.UsedMem += resource.Scalar.GetValue()
+				}
+				if resource.GetName() == "disk" {
+					metrics.UsedDisk += resource.Scalar.GetValue()
+				}
 			}
 		}
 	}

@@ -27,12 +27,17 @@ func (core *Core) FetchMetricData() (*registry.MetricsData, error) {
 // Monitor fetch mesos state and update task info
 func (core *Core) monitor() {
 	for {
+		// Fetch mesos state and update tasks and nodes
 		data, err := core.FetchMetricData()
 		if err != nil {
 			return
 		}
 		core.updateTasksByMetrics(data)
 		core.updateNodesByMetrics(data)
+
+		// Fetch agent data and update
+		core.updateNodesByCAdvisor()
+		core.updateTasksByCAdvisor()
 		time.Sleep(1 * time.Second)
 	}
 }

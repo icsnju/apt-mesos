@@ -359,6 +359,12 @@ func (core *Core) HandleResourceOffersMessage(message *mesosproto.ResourceOffers
 
 // HandleStatusUpdateMessage called when slave's status updated
 func (core *Core) HandleStatusUpdateMessage(statusMessage *mesosproto.StatusUpdateMessage) error {
+	status := statusMessage.GetUpdate().GetStatus()
+	if status.GetState() == mesosproto.TaskState_TASK_RUNNING {
+		task, _ := core.GetTask(status.GetTaskId().GetValue())
+		core.updateTaskByDockerInfo(task, status.GetData())
+	}
+
 	message := &mesosproto.StatusUpdateAcknowledgementMessage{
 		FrameworkId: statusMessage.GetUpdate().FrameworkId,
 		SlaveId:     statusMessage.GetUpdate().Status.SlaveId,
