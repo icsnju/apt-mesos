@@ -3,6 +3,7 @@ package impl
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	client "github.com/google/cadvisor/client/v2"
@@ -93,6 +94,7 @@ func (core *Core) updateTasksByMetrics(metrics *registry.MetricsData) {
 			log.Errorf("Cannot read task directory of %v: %v", task.ID, err)
 		}
 		task.Directory = directory
+		task.LastUpdateTime = time.Now().Unix()
 	}
 }
 
@@ -178,6 +180,7 @@ func (core *Core) updateTaskByDockerInfo(task *registry.Task, dockerInspectOutpu
 	}
 
 	task.ProcessID = dockerState.Pid
+	task.LastUpdateTime = time.Now().Unix()
 }
 
 func (core *Core) updateTasksByCAdvisor() {
@@ -192,27 +195,30 @@ func (core *Core) updateTasksByCAdvisor() {
 
 			request := info.RequestOptions{
 				IdType: "docker",
-				Count:  5,
+				Count:  15,
 			}
 			containerInfo, err := client.Stats(task.DockerID, &request)
 			if err != nil {
 				log.Errorf("Fetch container info failed: %v", err)
 			}
 
-			for _, info := range containerInfo {
-				if len(info.Stats) > 1 {
-					lastStats := info.Stats[len(info.Stats)-2]
-					currentStats := info.Stats[len(info.Stats)-1]
-
-					// ms -> ns.
-					timeInterval := float64((currentStats.Timestamp.Unix() - lastStats.Timestamp.Unix()) * 1000000)
-					task.CPUUsage = float64(currentStats.Cpu.Usage.Total-lastStats.Cpu.Usage.Total) / timeInterval
-					task.MemoryUsage = currentStats.Memory.Usage
+			var cpuStats []*registry.Usage
+			var memoryStats []*registry.Usage
+			for _, containerInfo := range containerInfo {
+				for _, containerStats := range containerInfo.Stats {
+					cpuStats = append(cpuStats, &registry.Usage{
+						Total:     containerStats.Cpu.Usage.Total,
+						Timestamp: containerStats.Timestamp,
+					})
+					memoryStats = append(memoryStats, &registry.Usage{
+						Total:     containerStats.Memory.Usage,
+						Timestamp: containerStats.Timestamp,
+					})
 				}
 			}
-		} else {
-			task.CPUUsage = 0.0
-			task.MemoryUsage = 0
+			task.CPUUsage = cpuStats
+			task.MemoryUsage = memoryStats
 		}
+		task.LastUpdateTime = time.Now().Unix()
 	}
 }

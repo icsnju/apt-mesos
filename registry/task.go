@@ -2,6 +2,7 @@ package registry
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/icsnju/apt-mesos/mesosproto"
 )
@@ -31,9 +32,10 @@ type Task struct {
 	SLA       string                 `json:"sla"`
 
 	// Monitoring
-	State       string  `json:"state"`
-	CPUUsage    float64 `json:"cpu_usage"`
-	MemoryUsage uint64  `json:"memory_usage"`
+	State          string   `json:"state"`
+	CPUUsage       []*Usage `json:"cpu_usage"`
+	MemoryUsage    []*Usage `json:"memory_usage"`
+	LastUpdateTime int64    `json:"last_update_time"`
 
 	// Docker settings
 	Command     string    `json:"cmd"`
@@ -78,4 +80,9 @@ func TestTask(id string) *Task {
 		DockerImage: "ubuntu",
 		Command:     "echo `hello sher`",
 	}
+}
+
+type Usage struct {
+	Total     uint64    `json:"total"`
+	Timestamp time.Time `json:"timestamp"`
 }
