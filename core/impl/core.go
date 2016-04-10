@@ -143,6 +143,11 @@ func (core *Core) GetAddr() string {
 	return core.addr
 }
 
+// GetAgentLisenPort return cadvisor listend port
+func (core *Core) GetAgentLisenPort() string {
+	return "18080"
+}
+
 // GetListenIPAndPort return core listend ip
 func (core *Core) GetListenIPAndPort() (string, string, error) {
 	splits := strings.Split(core.addr, ":")
@@ -354,6 +359,12 @@ func (core *Core) HandleResourceOffersMessage(message *mesosproto.ResourceOffers
 
 // HandleStatusUpdateMessage called when slave's status updated
 func (core *Core) HandleStatusUpdateMessage(statusMessage *mesosproto.StatusUpdateMessage) error {
+	status := statusMessage.GetUpdate().GetStatus()
+	if status.GetState() == mesosproto.TaskState_TASK_RUNNING {
+		task, _ := core.GetTask(status.GetTaskId().GetValue())
+		core.updateTaskByDockerInfo(task, status.GetData())
+	}
+
 	message := &mesosproto.StatusUpdateAcknowledgementMessage{
 		FrameworkId: statusMessage.GetUpdate().FrameworkId,
 		SlaveId:     statusMessage.GetUpdate().Status.SlaveId,

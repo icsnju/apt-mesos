@@ -1,0 +1,20 @@
+{
+    "name": "tomcat",
+    "cpus": "0.5",
+    "mem": "16",
+    "cmd": "catalina.sh",
+    "docker_image": "tomcat",
+    "volumes": [
+        {
+            "container_path":"/data",
+            "host_path":"/vagrant",
+            "mode": "rw"
+        }
+    ],
+    "port_mappings": [
+        {
+            "host_port":"31501",
+            "container_port":"8080"
+        }
+    ]
+}

@@ -117,9 +117,17 @@ func (h *Handler) DeleteTask() martini.Handler {
 	return func(w http.ResponseWriter, r *http.Request, params martini.Params) {
 		id := params["id"]
 
-		if err := h.core.KillTask(id); err != nil {
+		task, err := h.core.GetTask(id)
+		if err != nil {
 			writeError(w, err)
 			return
+		}
+
+		if task.State == "TASK_RUNNING" {
+			if err := h.core.KillTask(id); err != nil {
+				writeError(w, err)
+				return
+			}
 		}
 
 		if err := h.core.DeleteTask(id); err != nil {
