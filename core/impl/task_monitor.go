@@ -37,12 +37,14 @@ func (core *Core) updateTasksByMetrics(metrics *registry.MetricsData) {
 				}
 				// update task's state
 				taskInfo.State = task.State
-				core.UpdateTask(taskInfo.ID, taskInfo)
 			}
 
 			// fetch completed tasks
 			for _, task := range framework.CompletedTasks {
-				taskInfo, _ := core.GetTask(task.ID)
+				taskInfo, err := core.GetTask(task.ID)
+				if err != nil {
+					continue
+				}
 				// get executorID
 				if taskInfo.ExecutorID == "" {
 					taskInfo.ExecutorID = task.ExecutorID
@@ -61,7 +63,6 @@ func (core *Core) updateTasksByMetrics(metrics *registry.MetricsData) {
 					node, _ := core.GetNode(task.SlaveID)
 					taskInfo.SlaveHostname = node.Hostname
 				}
-				core.UpdateTask(taskInfo.ID, taskInfo)
 			}
 		}
 	}

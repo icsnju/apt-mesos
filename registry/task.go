@@ -25,9 +25,9 @@ const (
 type Task struct {
 	ID        string                 `json:"id"`
 	Name      string                 `json:"name"`
-	Cpus      float64                `json:"cpus"`
-	Mem       float64                `json:"mem"`
-	Disk      float64                `json:"disk"`
+	Cpus      float64                `json:"cpus,string"`
+	Mem       float64                `json:"mem,string"`
+	Disk      float64                `json:"disk,string"`
 	Resources []*mesosproto.Resource `json:"resources,omitempty"`
 	SLA       string                 `json:"sla"`
 
