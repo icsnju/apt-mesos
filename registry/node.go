@@ -4,13 +4,14 @@ import "github.com/icsnju/apt-mesos/mesosproto"
 
 // Node is one node of cluster
 type Node struct {
-	ID             string                          `json:"id"`
-	Host           string                          `json:"host"`
-	Hostname       string                          `json:"hostname"`
-	IsMaster       bool                            `json:"is_master"`
-	IsSlave        bool                            `json:"is_slave"`
-	Resources      map[string]*mesosproto.Resource `json:"resources"`
-	LastUpdateTime int64                           `json:"last_update_time"`
+	ID               string                          `json:"id"`
+	Host             string                          `json:"host"`
+	Hostname         string                          `json:"hostname"`
+	IsMaster         bool                            `json:"is_master"`
+	IsSlave          bool                            `json:"is_slave"`
+	Resources        map[string]*mesosproto.Resource `json:"resources"`
+	OfferedResources map[string]*mesosproto.Resource `json:"offered_resources"`
+	LastUpdateTime   int64                           `json:"last_update_time"`
 
 	MachineInfoFetched bool
 	NumCores           int    `json:"num_cores"`
@@ -20,11 +21,9 @@ type Node struct {
 	ContainerOsVersion string `json:"container_os_version"`
 	DockerVersion      string `json:"docker_version"`
 
-	CPURegistered    float64  `json:"cpu_registered"`
-	MemoryRegistered uint64   `json:"memory_registered"`
-	CPUUsage         float64  `json:"cpu_usage"`
-	MemoryUsage      uint64   `json:"memory_usage"`
-	Containers       []string `json:"containers"`
+	CPUUsage    float64  `json:"cpu_usage"`
+	MemoryUsage uint64   `json:"memory_usage"`
+	Containers  []string `json:"containers"`
 
 	Tasks []*Task `json:"tasks"`
 	PID   string

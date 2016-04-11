@@ -133,6 +133,6 @@ func (core *Core) MergePorts(ports []*registry.Port) *mesosproto.Resource {
 // GetUnScheduledTask return all un schedulered task
 func (core *Core) GetUnScheduledTask() []*registry.Task {
 	return core.FilterTask(func(task *registry.Task) bool {
-		return task.State == ""
+		return task.State == "TASK_WAITING"
 	})
 }

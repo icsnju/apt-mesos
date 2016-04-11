@@ -21,7 +21,6 @@ func (core *Core) FetchMetricData() (*registry.MetricsData, error) {
 		return nil, err
 	}
 	resp.Body.Close()
-
 	return data, nil
 }
 
@@ -35,11 +34,10 @@ func (core *Core) monitor() {
 			return
 		}
 		core.updateTasksByMetrics(data)
-		core.updateNodesByMetrics(data)
 
 		// Fetch agent data and update
 		core.updateNodesByCAdvisor()
 		core.updateTasksByCAdvisor()
-		time.Sleep(1 * time.Second)
+		time.Sleep(500 * time.Millisecond)
 	}
 }

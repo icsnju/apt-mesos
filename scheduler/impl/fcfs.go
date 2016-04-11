@@ -1,6 +1,9 @@
 package impl
 
-import "github.com/icsnju/apt-mesos/registry"
+import (
+	log "github.com/Sirupsen/logrus"
+	"github.com/icsnju/apt-mesos/registry"
+)
 
 // FCFSScheduler implements scheduler using FCFS algorithm
 type FCFSScheduler struct{}
@@ -12,7 +15,9 @@ func NewScheduler() *FCFSScheduler {
 
 // Schedule implementation
 func (scheduler *FCFSScheduler) Schedule(tasks []*registry.Task, nodes []*registry.Node) (*registry.Task, *registry.Node, bool) {
-	for _, task := range tasks {
+	log.Debugf("Schedule tasks, current registry len: %v", len(tasks))
+	queue := registry.NewFCFSQueue(tasks)
+	for _, task := range queue {
 		for _, node := range nodes {
 			if ResourcesMatch(task, node) && ConstraintsMatch(task, node) {
 				return task, node, true
