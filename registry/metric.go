@@ -17,6 +17,9 @@ type Metrics struct {
 
 // MetricsData is a struct suit for json data from mesos-master
 type MetricsData struct {
+	ID         string `json:"id"`
+	Hostname   string `json:"hostname"`
+	Version    string `json:"version"`
 	Frameworks []struct {
 		Tasks []struct {
 			ExecutorID string `json:"executor_id"`
@@ -42,9 +45,9 @@ type MetricsData struct {
 		PID       string
 		Hostname  string
 		Resources struct {
-			Cpus float64
-			Mem  float64
-			Disk float64
+			Cpus float64 `json:"cpus"`
+			Mem  float64 `json:"mem"`
+			Disk float64 `json:"disk"`
 		}
 	}
 }

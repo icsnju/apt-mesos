@@ -100,12 +100,18 @@ func (h *Handler) GetTask() martini.Handler {
 func (h *Handler) KillTask() martini.Handler {
 	return func(w http.ResponseWriter, r *http.Request, params martini.Params) {
 		id := params["id"]
-
-		if err := h.core.KillTask(id); err != nil {
+		task, err := h.core.GetTask(id)
+		if err != nil {
 			writeError(w, err)
 			return
 		}
 
+		if task.State == "TASK_RUNNING" {
+			if err := h.core.KillTask(id); err != nil {
+				writeError(w, err)
+				return
+			}
+		}
 		writeResponse(w, http.StatusOK, "Successful kill the task")
 	}
 }
