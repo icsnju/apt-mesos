@@ -110,21 +110,26 @@ func (core *Core) Run() error {
 func (core *Core) schedule() {
 	for {
 		tasks := core.GetUnScheduledTask()
-		// log.Debugf("Task queue size: %v", len(tasks))
 		if len(tasks) > 0 {
-			offers, _ := core.RequestOffers()
 			task, node, success := core.scheduler.Schedule(tasks, core.GetAllNodes())
+
 			// if remained resource can run a task
 			if success {
 				log.Infof("Schedule task result: run task(%v) on %v", task.ID, node.Hostname)
+
+				offers, err := core.RequestOffers()
+				if err != nil {
+					continue
+				}
 				core.LaunchTask(task, node, offers)
 				core.updateNodeByTask(node.ID, task)
 			} else {
 				log.Infof("No enough resources remained, wait for other tasks finish")
+				time.Sleep(3 * time.Second)
 			}
 		} else {
 			// log.Debug("Task registry has no task, sleep for a while...")
-			time.Sleep(1 * time.Second)
+			time.Sleep(3 * time.Second)
 		}
 	}
 }
@@ -204,7 +209,6 @@ func (core *Core) AcceptOffer(offer *mesosproto.Offer, resources []*mesosproto.R
 
 // DeclineOffer decline a offer which is not suit for task
 func (core *Core) DeclineOffer(offer *mesosproto.Offer, task *registry.Task) error {
-	log.WithFields(log.Fields{"offerId": offer.Id, "slave": offer.GetHostname()}).Debug("Decline offer...")
 	message := &mesosproto.LaunchTasksMessage{
 		FrameworkId: core.frameworkInfo.Id,
 		OfferIds:    []*mesosproto.OfferID{offer.Id},
@@ -243,7 +247,7 @@ func (core *Core) CreateTaskInfo(offer *mesosproto.Offer, resources []*mesosprot
 			Mode:          &mode,
 		})
 	}
-	log.Debug(task.Ports)
+
 	for _, port := range task.Ports {
 		dockerInfo.PortMappings = append(dockerInfo.PortMappings, &mesosproto.ContainerInfo_DockerInfo_PortMapping{
 			ContainerPort: &port.ContainerPort,
@@ -321,7 +325,6 @@ func (core *Core) LaunchTask(task *registry.Task, node *registry.Node, offers []
 				return err
 			}
 			task.State = "TASK_STAGING"
-			core.UpdateTask(task.ID, task)
 		} else {
 			if err := core.DeclineOffer(value, task); err != nil {
 				return err

@@ -4,7 +4,6 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/gogo/protobuf/proto"
 	client "github.com/google/cadvisor/client/v2"
 	info "github.com/google/cadvisor/info/v2"
 	comm "github.com/icsnju/apt-mesos/communication"
@@ -13,8 +12,8 @@ import (
 	scheduler "github.com/icsnju/apt-mesos/scheduler/impl"
 )
 
-// TODO this code has bug!!!
 // Update node information by MESOS-OFFERS
+// Only used when framework registered and get first offers
 func (core *Core) updateNodesByOffer(offers []*mesosproto.Offer) {
 	for _, offer := range offers {
 		// update resources
@@ -38,45 +37,17 @@ func (core *Core) updateNodesByOffer(offers []*mesosproto.Offer) {
 	}
 }
 
-func (core *Core) updateNodesByUpdateEvents(status *mesosproto.TaskStatus) {
-	if status.GetState().String() == "TASK_KILLED" || status.GetState().String() == "TASK_FAILED" ||
-		status.GetState().String() == "TASK_LOST" || status.GetState().String() == "TASK_FINISHED" {
-		log.Debugf("Task %v is on state %v, return resource to %v.", status.GetSlaveId(), status.GetState(), status.GetSlaveId())
-		// get node with status info
-		node, err := core.GetNode(status.GetSlaveId().GetValue())
-		if err != nil {
-			return
-		}
-
-		// get task with status info
-		task, err := core.GetTask(status.GetTaskId().GetValue())
-		if err != nil {
-			return
-		}
-
-		for _, resource := range task.Resources {
-			// Update scalar resource
-			if resource.GetType().String() == "SCALAR" {
-				node.Resources[resource.GetName()].Scalar.Value = proto.Float64(resource.GetScalar().GetValue() + node.Resources[resource.GetName()].GetScalar().GetValue())
-				// Update range resource
-			} else if resource.GetType().String() == "RANGES" {
-				node.Resources[resource.GetName()].Ranges = scheduler.RangeAdd(node.Resources[resource.GetName()].Ranges, resource.GetRanges())
-			}
-		}
-	}
-}
-
 // Update node information by tasks
 func (core *Core) updateNodeByTask(id string, task *registry.Task) {
 	node, _ := core.GetNode(id)
 	for _, resource := range task.Resources {
 		// Update scalar
 		if resource.GetType().String() == "SCALAR" {
-			newScalar := node.Resources[resource.GetName()].GetScalar().GetValue() - resource.GetScalar().GetValue()
-			node.Resources[resource.GetName()].Scalar.Value = &newScalar
+			newScalar := node.OfferedResources[resource.GetName()].GetScalar().GetValue() - resource.GetScalar().GetValue()
+			node.OfferedResources[resource.GetName()].Scalar.Value = &newScalar
 		} else if resource.GetType().String() == "RANGES" {
 			// Update ranges
-			node.Resources[resource.GetName()].Ranges = scheduler.RangeUsedUpdate(resource.GetRanges(), node.Resources[resource.GetName()].GetRanges())
+			node.OfferedResources[resource.GetName()].Ranges = scheduler.RangeUsedUpdate(resource.GetRanges(), node.OfferedResources[resource.GetName()].GetRanges())
 		}
 	}
 	node.Tasks = append(node.Tasks, task)
@@ -84,7 +55,12 @@ func (core *Core) updateNodeByTask(id string, task *registry.Task) {
 }
 
 // Update node information by Metrics
-func (core *Core) updateNodesByMetrics(metrics *registry.MetricsData) {
+func (core *Core) updateNodesByMetrics() {
+	metrics, err := core.FetchMetricData()
+	if err != nil {
+		log.Errorf("Fetch metric data error: %v", err)
+		return
+	}
 
 	// get slavePID of task
 	for _, slave := range metrics.Slaves {
@@ -95,12 +71,13 @@ func (core *Core) updateNodesByMetrics(metrics *registry.MetricsData) {
 			}
 
 			if node.ID == slave.ID {
-				// update node pid
+				node.IsSlave = true
+				// update node pid for the first time
 				if node.PID == "" {
 					node.PID = slave.PID
 				}
 
-				// update node host
+				// update node host for the first time
 				if node.Host == "" {
 					upid, err := comm.Parse(slave.PID)
 					if err != nil {
@@ -108,10 +85,13 @@ func (core *Core) updateNodesByMetrics(metrics *registry.MetricsData) {
 					}
 					node.Host = upid.Host
 				}
-				node.CPURegistered = slave.Resources.Cpus
-				node.MemoryRegistered = uint64(slave.Resources.Mem)
+
+				offeredResources := scheduler.BuildResourcesFromMap(slave.OfferedResources)
+				node.OfferedResources = offeredResources
+
+				// node.CPURegistered = slave.Resources.Cpus
+				// node.MemoryRegistered = uint64(slave.Resources.Mem)
 				//find for slave node
-				node.IsSlave = true
 				node.LastUpdateTime = time.Now().Unix()
 			}
 		}

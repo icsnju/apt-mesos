@@ -1,6 +1,12 @@
 package impl
 
 import (
+	"errors"
+	"reflect"
+	"regexp"
+	"strconv"
+
+	log "github.com/Sirupsen/logrus"
 	"github.com/gogo/protobuf/proto"
 	"github.com/icsnju/apt-mesos/mesosproto"
 	"github.com/icsnju/apt-mesos/registry"
@@ -19,23 +25,24 @@ func ConstraintsMatch(task *registry.Task, node *registry.Node) bool {
 
 // ResourcesMatch check if a offer fit task's resources
 func ResourcesMatch(task *registry.Task, node *registry.Node) bool {
+	BuildBasicResources(task)
 	for _, resource := range task.Resources {
 		// the node don't have this resource
-		if node.Resources[resource.GetName()] == nil {
+		if node.OfferedResources[resource.GetName()] == nil {
 			return false
 		}
 
 		if resource.GetType().String() == "SCALAR" {
 			// check SCALAR type resource
-			if node.Resources[resource.GetName()].GetScalar().GetValue() < resource.GetScalar().GetValue() {
+			if node.OfferedResources[resource.GetName()].GetScalar().GetValue() < resource.GetScalar().GetValue() {
 				return false
 			}
 		} else if resource.GetType().String() == "RANGES" {
 			// check RANGES type resource
 			for _, taskRange := range resource.GetRanges().GetRange() {
 				exists := false
-				for _, nodeRange := range node.Resources[resource.GetName()].GetRanges().GetRange() {
-					if rangeInside(nodeRange, taskRange) {
+				for _, nodeRange := range node.OfferedResources[resource.GetName()].GetRanges().GetRange() {
+					if RangeInside(nodeRange, taskRange) {
 						exists = true
 						break
 					}
@@ -59,6 +66,38 @@ func BuildResources(task *registry.Task) []*mesosproto.Resource {
 	return resources
 }
 
+// BuildBasicResources build basic resources
+// including cpus, mem, disk, ports
+func BuildBasicResources(task *registry.Task) {
+	task.Resources = append(task.Resources, &mesosproto.Resource{
+		Name:   proto.String("cpus"),
+		Type:   mesosproto.Value_SCALAR.Enum(),
+		Scalar: &mesosproto.Value_Scalar{Value: proto.Float64(task.Cpus)},
+	})
+	task.Resources = append(task.Resources, &mesosproto.Resource{
+		Name:   proto.String("mem"),
+		Type:   mesosproto.Value_SCALAR.Enum(),
+		Scalar: &mesosproto.Value_Scalar{Value: proto.Float64(task.Mem)},
+	})
+	task.Resources = append(task.Resources, &mesosproto.Resource{
+		Name:   proto.String("disk"),
+		Type:   mesosproto.Value_SCALAR.Enum(),
+		Scalar: &mesosproto.Value_Scalar{Value: proto.Float64(task.Disk)},
+	})
+	ranges := &mesosproto.Value_Ranges{}
+	for _, port := range task.Ports {
+		ranges.Range = append(ranges.Range, &mesosproto.Value_Range{
+			Begin: proto.Uint64(uint64(port.HostPort)),
+			End:   proto.Uint64(uint64(port.HostPort)),
+		})
+	}
+	task.Resources = append(task.Resources, &mesosproto.Resource{
+		Name:   proto.String("ports"),
+		Type:   mesosproto.Value_RANGES.Enum(),
+		Ranges: ranges,
+	})
+}
+
 // BuildEmptyResources build empty resources
 func BuildEmptyResources() []*mesosproto.Resource {
 	var resources = []*mesosproto.Resource{}
@@ -75,11 +114,37 @@ func BuildEmptyResources() []*mesosproto.Resource {
 	return resources
 }
 
+// BuildResourcesFromMap build resources from a map
+func BuildResourcesFromMap(resourceMap map[string]interface{}) map[string]*mesosproto.Resource {
+	resources := make(map[string]*mesosproto.Resource)
+	for key, value := range resourceMap {
+		// Now we only support scalar and ranges
+		if reflect.TypeOf(value).Kind() == reflect.Float64 {
+			resources[key] = &mesosproto.Resource{
+				Name:   proto.String(key),
+				Type:   mesosproto.Value_SCALAR.Enum(),
+				Scalar: &mesosproto.Value_Scalar{Value: proto.Float64(value.(float64))},
+			}
+		} else if reflect.TypeOf(value).Kind() == reflect.String {
+			ranges, err := ParseRanges(value.(string))
+			if err != nil {
+				log.Error(err)
+			}
+			resources[key] = &mesosproto.Resource{
+				Name:   proto.String(key),
+				Type:   mesosproto.Value_RANGES.Enum(),
+				Ranges: ranges,
+			}
+		}
+	}
+	return resources
+}
+
 func RangeUsedUpdate(taskRanges *mesosproto.Value_Ranges, nodeRanges *mesosproto.Value_Ranges) *mesosproto.Value_Ranges {
 	var newNodeRanges []*mesosproto.Value_Range
 	for _, taskRange := range taskRanges.GetRange() {
 		for _, nodeRange := range nodeRanges.GetRange() {
-			if rangeInside(nodeRange, taskRange) {
+			if RangeInside(nodeRange, taskRange) {
 				subedLeftRange, subedRightRange := rangeSub(nodeRange, taskRange)
 				if subedLeftRange != nil {
 					newNodeRanges = append(newNodeRanges, subedLeftRange)
@@ -95,7 +160,7 @@ func RangeUsedUpdate(taskRanges *mesosproto.Value_Ranges, nodeRanges *mesosproto
 	}
 }
 
-func rangeInside(large *mesosproto.Value_Range, small *mesosproto.Value_Range) bool {
+func RangeInside(large *mesosproto.Value_Range, small *mesosproto.Value_Range) bool {
 	return large.GetBegin() <= small.GetBegin() && large.GetEnd() >= small.GetEnd()
 }
 
@@ -157,4 +222,31 @@ func RangeAdd(rangeOne *mesosproto.Value_Ranges, rangeTwo *mesosproto.Value_Rang
 	}
 
 	return newRanges
+}
+
+func ParseRanges(text string) (*mesosproto.Value_Ranges, error) {
+	reg := regexp.MustCompile(`([\d]+)`)
+	ports := reg.FindAllString(text, -1)
+	ranges := &mesosproto.Value_Ranges{}
+
+	if len(ports)%2 != 0 {
+		return nil, errors.New("Cannot parse range string: " + text)
+	}
+
+	for i := 0; i < len(ports)-1; i += 2 {
+		i64Begin, err := strconv.Atoi(ports[i])
+		if err != nil {
+			return nil, errors.New("Cannot parse range string: " + text)
+		}
+		i64End, err := strconv.Atoi(ports[i+1])
+		if err != nil {
+			return nil, errors.New("Cannot parse range string: " + text)
+		}
+
+		ranges.Range = append(ranges.Range, &mesosproto.Value_Range{
+			Begin: proto.Uint64(uint64(i64Begin)),
+			End:   proto.Uint64(uint64(i64End)),
+		})
+	}
+	return ranges, nil
 }

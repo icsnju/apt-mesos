@@ -40,3 +40,16 @@ func TestRangeAdd(t *testing.T) {
 		So(rangeC.Range[1].GetEnd(), ShouldEqual, 28)
 	})
 }
+
+func TestRangeParse(t *testing.T) {
+	Convey("range parse", t, func() {
+		ranges, err := schedule.ParseRanges("[31000-31500, 31502-31504, 31505-31200] ")
+		So(err, ShouldBeNil)
+		So(ranges.Range[0].GetBegin(), ShouldEqual, 31000)
+		So(ranges.Range[2].GetEnd(), ShouldEqual, 31200)
+	})
+}
+
+func TestRangeInside(t *testing.T) {
+
+}

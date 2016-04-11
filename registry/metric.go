@@ -41,13 +41,10 @@ type MetricsData struct {
 		ID string
 	}
 	Slaves []struct {
-		ID        string
-		PID       string
-		Hostname  string
-		Resources struct {
-			Cpus float64 `json:"cpus"`
-			Mem  float64 `json:"mem"`
-			Disk float64 `json:"disk"`
-		}
+		ID               string
+		PID              string
+		Hostname         string
+		Resources        map[string]interface{} `json:"resources"`
+		OfferedResources map[string]interface{} `json:"offered_resources"`
 	}
 }

@@ -65,7 +65,8 @@ func (h *Handler) AddTask() martini.Handler {
 			return
 		}
 		task.ID = hex.EncodeToString(id)
-		task.CreatedTime = time.Now().Unix()
+		task.CreatedTime = time.Now().UnixNano()
+		task.State = "TASK_WAITING"
 		log.Debugf("Receive task: %v", task)
 
 		err = h.core.AddTask(task.ID, task)
