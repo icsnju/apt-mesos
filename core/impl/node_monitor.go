@@ -4,6 +4,7 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/gogo/protobuf/proto"
 	client "github.com/google/cadvisor/client/v2"
 	info "github.com/google/cadvisor/info/v2"
 	comm "github.com/icsnju/apt-mesos/communication"
@@ -12,6 +13,7 @@ import (
 	scheduler "github.com/icsnju/apt-mesos/scheduler/impl"
 )
 
+// TODO this code has bug!!!
 // Update node information by MESOS-OFFERS
 func (core *Core) updateNodesByOffer(offers []*mesosproto.Offer) {
 	for _, offer := range offers {
@@ -32,11 +34,34 @@ func (core *Core) updateNodesByOffer(offers []*mesosproto.Offer) {
 				Resources:      resources,
 			}
 			core.RegisterNode(slaveID, node)
-		} else {
-			node, _ := core.GetNode(slaveID)
-			node.Resources = resources
-			node.LastUpdateTime = time.Now().Unix()
-			core.UpdateNode(slaveID, node)
+		}
+	}
+}
+
+func (core *Core) updateNodesByUpdateEvents(status *mesosproto.TaskStatus) {
+	if status.GetState().String() == "TASK_KILLED" || status.GetState().String() == "TASK_FAILED" ||
+		status.GetState().String() == "TASK_LOST" || status.GetState().String() == "TASK_FINISHED" {
+		log.Debugf("Task %v is on state %v, return resource to %v.", status.GetSlaveId(), status.GetState(), status.GetSlaveId())
+		// get node with status info
+		node, err := core.GetNode(status.GetSlaveId().GetValue())
+		if err != nil {
+			return
+		}
+
+		// get task with status info
+		task, err := core.GetTask(status.GetTaskId().GetValue())
+		if err != nil {
+			return
+		}
+
+		for _, resource := range task.Resources {
+			// Update scalar resource
+			if resource.GetType().String() == "SCALAR" {
+				node.Resources[resource.GetName()].Scalar.Value = proto.Float64(resource.GetScalar().GetValue() + node.Resources[resource.GetName()].GetScalar().GetValue())
+				// Update range resource
+			} else if resource.GetType().String() == "RANGES" {
+				node.Resources[resource.GetName()].Ranges = scheduler.RangeAdd(node.Resources[resource.GetName()].Ranges, resource.GetRanges())
+			}
 		}
 	}
 }
@@ -54,19 +79,28 @@ func (core *Core) updateNodeByTask(id string, task *registry.Task) {
 			node.Resources[resource.GetName()].Ranges = scheduler.RangeUsedUpdate(resource.GetRanges(), node.Resources[resource.GetName()].GetRanges())
 		}
 	}
+	node.Tasks = append(node.Tasks, task)
 	node.LastUpdateTime = time.Now().Unix()
-	core.UpdateNode(id, node)
 }
 
 // Update node information by Metrics
 func (core *Core) updateNodesByMetrics(metrics *registry.MetricsData) {
+
 	// get slavePID of task
 	for _, slave := range metrics.Slaves {
 		for _, node := range core.GetAllNodes() {
+			// find for master node
+			if node.Hostname == metrics.Hostname {
+				node.IsMaster = true
+			}
+
 			if node.ID == slave.ID {
+				// update node pid
 				if node.PID == "" {
 					node.PID = slave.PID
 				}
+
+				// update node host
 				if node.Host == "" {
 					upid, err := comm.Parse(slave.PID)
 					if err != nil {
@@ -74,12 +108,14 @@ func (core *Core) updateNodesByMetrics(metrics *registry.MetricsData) {
 					}
 					node.Host = upid.Host
 				}
+				node.CPURegistered = slave.Resources.Cpus
+				node.MemoryRegistered = uint64(slave.Resources.Mem)
+				//find for slave node
+				node.IsSlave = true
 				node.LastUpdateTime = time.Now().Unix()
-				core.UpdateNode(node.ID, node)
 			}
 		}
 	}
-
 }
 
 // Update node information by CAdvisor

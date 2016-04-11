@@ -38,12 +38,14 @@ type Task struct {
 	LastUpdateTime int64    `json:"last_update_time"`
 
 	// Docker settings
-	Command     string    `json:"cmd"`
-	Arguments   []string  `json:"arguments,omitempty"`
-	DockerImage string    `json:"docker_image"`
-	Volumes     []*Volume `json:"volumes,omitempty"`
-	Ports       []*Port   `json:"port_mappings,omitempty"`
-	NetworkMode string    `json:"network_mode"`
+	Command     string       `json:"cmd"`
+	Arguments   []string     `json:"arguments,omitempty"`
+	DockerImage string       `json:"docker_image"`
+	Volumes     []*Volume    `json:"volumes,omitempty"`
+	Ports       []*Port      `json:"port_mappings,omitempty"`
+	NetworkMode string       `json:"network_mode"`
+	Privileged  bool         `json:"privileged"`
+	Parameters  []*Parameter `json:"parameters,omitempty"`
 
 	// Docker inspect
 	DockerID   string `json:"docker_id"`
@@ -66,6 +68,12 @@ type DockerTask struct {
 	DockerID    string          `json:"Id"`
 	DockerName  string          `json:"Name"`
 	DockerState json.RawMessage `json:"State"`
+}
+
+// Parameter of docker
+type Parameter struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
 }
 
 // DockerState is the state of docker

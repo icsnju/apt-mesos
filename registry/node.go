@@ -7,7 +7,8 @@ type Node struct {
 	ID             string                          `json:"id"`
 	Host           string                          `json:"host"`
 	Hostname       string                          `json:"hostname"`
-	NodeType       string                          `json:"node_type"`
+	IsMaster       bool                            `json:"is_master"`
+	IsSlave        bool                            `json:"is_slave"`
 	Resources      map[string]*mesosproto.Resource `json:"resources"`
 	LastUpdateTime int64                           `json:"last_update_time"`
 
@@ -19,9 +20,11 @@ type Node struct {
 	ContainerOsVersion string `json:"container_os_version"`
 	DockerVersion      string `json:"docker_version"`
 
-	CPUUsage    float64  `json:"cpu_usage"`
-	MemoryUsage uint64   `json:"memory_usage"`
-	Containers  []string `json:"containers"`
+	CPURegistered    float64  `json:"cpu_registered"`
+	MemoryRegistered uint64   `json:"memory_registered"`
+	CPUUsage         float64  `json:"cpu_usage"`
+	MemoryUsage      uint64   `json:"memory_usage"`
+	Containers       []string `json:"containers"`
 
 	Tasks []*Task `json:"tasks"`
 	PID   string

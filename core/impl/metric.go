@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/icsnju/apt-mesos/registry"
 )
 
@@ -30,6 +31,7 @@ func (core *Core) monitor() {
 		// Fetch mesos state and update tasks and nodes
 		data, err := core.FetchMetricData()
 		if err != nil {
+			log.Errorf("Fetch metric data error: %v", err)
 			return
 		}
 		core.updateTasksByMetrics(data)

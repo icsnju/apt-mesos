@@ -121,3 +121,40 @@ func rangeSub(large *mesosproto.Value_Range, small *mesosproto.Value_Range) (*me
 	}
 	return subedLeftRange, subedRightRange
 }
+
+func RangeAdd(rangeOne *mesosproto.Value_Ranges, rangeTwo *mesosproto.Value_Ranges) *mesosproto.Value_Ranges {
+	line := make([]bool, 65536)
+	for _, enumRange := range rangeOne.GetRange() {
+		for index := enumRange.GetBegin(); index <= enumRange.GetEnd(); index++ {
+			line[index] = true
+		}
+	}
+
+	for _, enumRange := range rangeTwo.GetRange() {
+		for index := enumRange.GetBegin(); index <= enumRange.GetEnd(); index++ {
+			line[index] = true
+		}
+	}
+
+	newRanges := &mesosproto.Value_Ranges{}
+	for index := 0; index < len(line); {
+		for index < len(line) && !line[index] {
+			index++
+		}
+		if index < len(line) {
+			uint64Begin := uint64(index)
+			newRange := &mesosproto.Value_Range{
+				Begin: &uint64Begin,
+			}
+
+			for index < len(line) && line[index] {
+				index++
+			}
+			uint64End := uint64(index - 1)
+			newRange.End = &uint64End
+			newRanges.Range = append(newRanges.Range, newRange)
+		}
+	}
+
+	return newRanges
+}

@@ -26,6 +26,8 @@ func (core *Core) AddEvent(eventType mesosproto.Event_Type, event *mesosproto.Ev
 	if eventType == mesosproto.Event_OFFERS {
 		log.Debugf("Received %d offer(s).", len(event.Offers.Offers))
 		core.updateNodesByOffer(event.Offers.Offers)
+	} else if eventType == mesosproto.Event_UPDATE {
+		core.updateNodesByUpdateEvents(event.GetUpdate().GetStatus())
 	}
 
 	if c, ok := core.events[eventType]; ok {
