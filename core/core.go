@@ -17,7 +17,7 @@ type Core interface {
 	HandleStatusUpdateMessage(message *mesosproto.StatusUpdateMessage) error
 
 	RequestOffers() ([]*mesosproto.Offer, error)
-	LaunchTask(task *registry.Task, node *registry.Node, offers []*mesosproto.Offer) error
+	LaunchTask(task *registry.Task, offer *mesosproto.Offer, offers []*mesosproto.Offer) error
 
 	// Task manage
 	AddTask(id string, task *registry.Task) error

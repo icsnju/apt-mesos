@@ -89,6 +89,7 @@ func (core *Core) updateNodesByMetrics() {
 				offeredResources := scheduler.BuildResourcesFromMap(slave.OfferedResources)
 				node.OfferedResources = offeredResources
 
+				log.Debugf("Node %v status updated: %v", node.Hostname, node.OfferedResources["ports"])
 				// node.CPURegistered = slave.Resources.Cpus
 				// node.MemoryRegistered = uint64(slave.Resources.Mem)
 				//find for slave node

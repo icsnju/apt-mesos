@@ -25,9 +25,6 @@ func (core *Core) AddEvent(eventType mesosproto.Event_Type, event *mesosproto.Ev
 	log.WithFields(log.Fields{"type": eventType}).Debug("Received event from master.")
 	if eventType == mesosproto.Event_OFFERS {
 		log.Debugf("Received %d offer(s).", len(event.Offers.Offers))
-		if len(event.Offers.Offers) < len(core.GetAllNodes()) {
-			core.RequestOffers()
-		}
 		core.updateNodesByOffer(event.Offers.Offers)
 		core.updateNodesByMetrics()
 	}

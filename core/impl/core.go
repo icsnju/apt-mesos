@@ -111,18 +111,23 @@ func (core *Core) schedule() {
 	for {
 		tasks := core.GetUnScheduledTask()
 		if len(tasks) > 0 {
-			task, node, success := core.scheduler.Schedule(tasks, core.GetAllNodes())
+			offers, err := core.RequestOffers()
+			if err != nil {
+				log.Errorf("Request offers error: %v", err)
+				continue
+			}
+
+			for _, offer := range offers {
+				log.Debug(offer)
+			}
+
+			task, offer, success := core.scheduler.Schedule(tasks, offers)
 
 			// if remained resource can run a task
 			if success {
-				log.Infof("Schedule task result: run task(%v) on %v", task.ID, node.Hostname)
-
-				offers, err := core.RequestOffers()
-				if err != nil {
-					continue
-				}
-				core.LaunchTask(task, node, offers)
-				core.updateNodeByTask(node.ID, task)
+				log.Infof("Schedule task result: run task(%v) on %v", task.ID, offer.GetHostname())
+				core.LaunchTask(task, offer, offers)
+				core.updateNodeByTask(offer.GetSlaveId().GetValue(), task)
 			} else {
 				log.Infof("No enough resources remained, wait for other tasks finish")
 				time.Sleep(3 * time.Second)
@@ -191,7 +196,7 @@ func (core *Core) RequestOffers() ([]*mesosproto.Offer, error) {
 
 // AcceptOffer send message to mesos-master to accept a offer
 func (core *Core) AcceptOffer(offer *mesosproto.Offer, resources []*mesosproto.Resource, task *registry.Task) error {
-	log.Infof("Lauch task %v, command(%v), docker_image(%v)", task.ID, task.Command, task.DockerImage)
+	log.Infof("Launch task %v, command(%v), docker_image(%v) on node %v", task.ID, task.Command, task.DockerImage, offer.GetHostname())
 	taskInfo := core.CreateTaskInfo(offer, resources, task)
 	message := &mesosproto.LaunchTasksMessage{
 		FrameworkId: core.frameworkInfo.Id,
@@ -315,17 +320,17 @@ func (core *Core) CreateTaskInfo(offer *mesosproto.Offer, resources []*mesosprot
 }
 
 // LaunchTask with specific offer and resources
-func (core *Core) LaunchTask(task *registry.Task, node *registry.Node, offers []*mesosproto.Offer) error {
+func (core *Core) LaunchTask(task *registry.Task, offer *mesosproto.Offer, offers []*mesosproto.Offer) error {
 	core.generateResource(task)
-	log.Debug(task.Resources)
 	resources := scheduler.BuildResources(task)
 	for _, value := range offers {
-		if node.ID == value.GetSlaveId().GetValue() {
+		if offer.GetSlaveId() == value.GetSlaveId() {
 			if err := core.AcceptOffer(value, resources, task); err != nil {
 				return err
 			}
 			task.State = "TASK_STAGING"
 		} else {
+			log.Debugf("Decline offer for node: %v", value.GetHostname())
 			if err := core.DeclineOffer(value, task); err != nil {
 				return err
 			}

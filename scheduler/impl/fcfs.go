@@ -2,6 +2,7 @@ package impl
 
 import (
 	log "github.com/Sirupsen/logrus"
+	"github.com/icsnju/apt-mesos/mesosproto"
 	"github.com/icsnju/apt-mesos/registry"
 )
 
@@ -14,13 +15,13 @@ func NewScheduler() *FCFSScheduler {
 }
 
 // Schedule implementation
-func (scheduler *FCFSScheduler) Schedule(tasks []*registry.Task, nodes []*registry.Node) (*registry.Task, *registry.Node, bool) {
+func (scheduler *FCFSScheduler) Schedule(tasks []*registry.Task, offers []*mesosproto.Offer) (*registry.Task, *mesosproto.Offer, bool) {
 	log.Debugf("Schedule tasks, current registry len: %v", len(tasks))
 	queue := registry.NewFCFSQueue(tasks)
 	for _, task := range queue {
-		for _, node := range nodes {
-			if ResourcesMatch(task, node) && ConstraintsMatch(task, node) {
-				return task, node, true
+		for _, offer := range offers {
+			if ResourcesMatch(task, offer) && ConstraintsMatch(task, offer) {
+				return task, offer, true
 			}
 		}
 	}
