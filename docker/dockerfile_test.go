@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/icsnju/apt-mesos/docker"
-	"github.com/icsnju/apt-mesos/mesosproto"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -18,8 +17,4 @@ func TestParse(t *testing.T) {
 		So(dockerfile.HasLocalSources(), ShouldBeTrue)
 		dockerfile.BuildContext()
 	})
-}
-
-func TestPrepareContext(t *testing.T) {
-	var taskInfo mesosproto.TaskInfo
 }
