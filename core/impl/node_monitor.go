@@ -89,6 +89,7 @@ func (core *Core) updateNodesByMetrics() {
 				offeredResources := scheduler.BuildResourcesFromMap(slave.OfferedResources)
 				node.OfferedResources = offeredResources
 
+				log.Debugf("Node %v status updated: %v", node.Hostname, node.OfferedResources["ports"])
 				// node.CPURegistered = slave.Resources.Cpus
 				// node.MemoryRegistered = uint64(slave.Resources.Mem)
 				//find for slave node
@@ -107,13 +108,13 @@ func (core *Core) updateNodesByCAdvisor() {
 				log.Errorf("Cannot connect to cadvisor agent: %v", err)
 				continue
 			}
-
 			// Fetch software versions and hardware information
 			// One node fetches just one time
 			if !node.MachineInfoFetched {
 				attributes, err := client.Attributes()
 				if err != nil {
 					log.Errorf("Fetch machine info failed: %v", err)
+					continue
 				}
 				node.NumCores = attributes.NumCores
 				node.KernelVersion = attributes.KernelVersion
@@ -145,6 +146,7 @@ func (core *Core) updateNodesByCAdvisor() {
 					timeInterval := float64((currentStats.Timestamp.Unix() - lastStats.Timestamp.Unix()) * 1000000)
 					node.CPUUsage = float64(currentStats.Cpu.Usage.Total-lastStats.Cpu.Usage.Total) / timeInterval
 					node.MemoryUsage = currentStats.Memory.Usage
+					node.LastUpdateTime = time.Now().Unix()
 				}
 			}
 		}
