@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	dockerfile = docker.NewDockerfile("123", "../examples/docker_context", "")
+	dockerfile = docker.NewDockerfile("123", "../examples/docker_context")
 )
 
 func TestParse(t *testing.T) {

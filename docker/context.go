@@ -1,35 +1,36 @@
 package docker
 
 import (
-	"io/ioutil"
 	"os"
 	"path"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/icsnju/apt-mesos/utils"
 )
 
 var (
-	TEMPDIR = "../temp"
+	TEMPDIR = "./temp"
 )
 
 func (dockerfile *Dockerfile) BuildContext() error {
+
 	if !dockerfile.HasLocalSources() {
 		return nil
 	}
 
 	// Copy all context to a temp directory
-	contextDir, err := ioutil.TempDir(TEMPDIR, "job_context")
+	tempContextDir := path.Join(TEMPDIR, "context-"+dockerfile.ID)
+	log.Debugf("Build docker context in path: %v", tempContextDir)
+
+	err := utils.CopyDir(dockerfile.Path, tempContextDir)
 	if err != nil {
 		return err
 	}
-	err = utils.CopyDir(dockerfile.Path, contextDir)
-	if err != nil {
-		return err
-	}
-	defer os.RemoveAll(contextDir)
+	defer os.RemoveAll(tempContextDir)
 
 	tarFile := dockerfile.ID + ".tar"
-	err = utils.Tar(contextDir, path.Join(TEMPDIR, tarFile), false)
+	log.Debugf("Tar docker context to path: %v", path.Join(TEMPDIR, tarFile))
+	err = utils.Tar(tempContextDir, path.Join(TEMPDIR, tarFile), false)
 	if err != nil {
 		return err
 	}

@@ -1,6 +1,7 @@
 package impl
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -49,6 +50,7 @@ func NewCore(addr string, master string) *Core {
 		events:        NewEvents(),
 		tasks:         *registry.NewRegistry(),
 		nodes:         *registry.NewRegistry(),
+		jobs:          *registry.NewRegistry(),
 		scheduler:     *scheduler.NewScheduler(),
 		Endpoints:     nil,
 	}
@@ -196,9 +198,7 @@ func (core *Core) RequestOffers() ([]*mesosproto.Offer, error) {
 }
 
 // AcceptOffer send message to mesos-master to accept a offer
-func (core *Core) AcceptOffer(offer *mesosproto.Offer, resources []*mesosproto.Resource, task *registry.Task) error {
-	log.Infof("Launch task %v, command(%v), docker_image(%v) on node %v", task.ID, task.Command, task.DockerImage, offer.GetHostname())
-	taskInfo := core.CreateSingleTaskInfo(offer, resources, task)
+func (core *Core) AcceptOffer(offer *mesosproto.Offer, resources []*mesosproto.Resource, taskInfo *mesosproto.TaskInfo) error {
 	message := &mesosproto.LaunchTasksMessage{
 		FrameworkId: core.frameworkInfo.Id,
 		OfferIds:    []*mesosproto.OfferID{offer.Id},
@@ -233,9 +233,27 @@ func (core *Core) DeclineOffer(offer *mesosproto.Offer, task *registry.Task) err
 func (core *Core) LaunchTask(task *registry.Task, offer *mesosproto.Offer, offers []*mesosproto.Offer) error {
 	core.generateResource(task)
 	resources := scheduler.BuildResources(task)
+
+	log.Infof("Launch task %v, on node %v", task.ID, offer.GetHostname())
+	taskInfo := &mesosproto.TaskInfo{}
+	if task.Type == registry.TaskType_Test {
+		taskInfo = core.CreateSingleTaskInfo(offer, resources, task)
+	} else if task.Type == registry.TaskType_Build {
+		taskInfo, err := core.CreateBuildImageTaskInfo(offer, resources, task)
+		if err != nil {
+			return err
+		}
+
+		// TODO
+		log.Debug(taskInfo)
+		return nil
+	} else {
+		return errors.New("Unknown task type received.")
+	}
+
 	for _, value := range offers {
 		if offer.GetSlaveId() == value.GetSlaveId() {
-			if err := core.AcceptOffer(value, resources, task); err != nil {
+			if err := core.AcceptOffer(value, resources, taskInfo); err != nil {
 				return err
 			}
 			task.State = "TASK_STAGING"

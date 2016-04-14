@@ -68,3 +68,21 @@ func CopyDir(source string, dest string) (err error) {
 	}
 	return
 }
+
+// Exists check whether a file is exists
+func Exists(name string) bool {
+	_, err := os.Stat(name)
+	return err == nil || os.IsExist(err)
+}
+
+// FileExists check whether a file is exists and is a file
+func FileExists(filename string) bool {
+	fi, err := os.Stat(filename)
+	return (err == nil || os.IsExist(err)) && !fi.IsDir()
+}
+
+// DirExists check whether a dir is exists
+func DirExists(dirname string) bool {
+	fi, err := os.Stat(dirname)
+	return (err == nil || os.IsExist(err)) && fi.IsDir()
+}

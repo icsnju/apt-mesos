@@ -28,12 +28,12 @@ type Instruction struct {
 var INTERNAL = []string{"REGISTRY", "REPOSITORY", "BUILD_CPU", "BUILD_MEM"}
 
 // NewDockerfile return new dockerfile
-func NewDockerfile(ID, filePath, registry string) *Dockerfile {
+func NewDockerfile(ID, filePath string) *Dockerfile {
 	dockerfile := &Dockerfile{
 		ID:                   ID,
 		Instructions:         []*Instruction{},
 		InternalInstructions: []*Instruction{},
-		Registry:             registry,
+		Registry:             "",
 		Repository:           "",
 		Path:                 filePath,
 	}

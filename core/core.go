@@ -27,6 +27,14 @@ type Core interface {
 	KillTask(id string) error
 	GetUnScheduledTask() []*registry.Task
 
+	// Job manage
+	AddJob(id string, job *registry.Job) error
+	GetAllJobs() []*registry.Job
+	GetJob(id string) (*registry.Job, error)
+	DeleteJob(id string) error
+	UpdateJob(id string, job *registry.Job) error
+	StartJob(job *registry.Job) error
+
 	// Node manage
 	RegisterNode(id string, node *registry.Node) error
 	GetNode(id string) (*registry.Node, error)

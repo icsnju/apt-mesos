@@ -1,12 +1,21 @@
 package impl
 
 import (
+	"errors"
 	"fmt"
 	"strings"
+	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/gogo/protobuf/proto"
+	"github.com/icsnju/apt-mesos/docker"
 	"github.com/icsnju/apt-mesos/mesosproto"
 	"github.com/icsnju/apt-mesos/registry"
+)
+
+var (
+	BUILD_CPU float64 = 0.5
+	BUILD_MEM float64 = 128
 )
 
 // CreateSingleTaskInfo build single taskInfo for task
@@ -100,8 +109,68 @@ func (core *Core) CreateSingleTaskInfo(offer *mesosproto.Offer, resources []*mes
 	return taskInfo
 }
 
-// func createBuildImageTaskInfo(offer *mesosproto.Offer, resources []*mesosproto.Resource, dockerfile *docker.Dockerfile) *mesosproto.TaskInfo {
-// 	if dockerfile.HasLocalSources() {
-// 		dockerfile.BuildContext()
-// 	}
-// }
+func (core *Core) StartJob(job *registry.Job) error {
+	log.Infof("Starting job: %v", job.ID)
+	err := core.CreateBuildImageTask(job)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (core *Core) CreateBuildImageTask(job *registry.Job) error {
+	log.Infof("Create task for job(%v) to build image", job.ID)
+	task := &registry.Task{
+		Cpus:        BUILD_CPU,
+		Mem:         BUILD_MEM,
+		ID:          "build-" + job.ID,
+		Name:        "build image to job " + job.Name,
+		Type:        registry.TaskType_Build,
+		CreatedTime: time.Now().UnixNano(),
+		JobID:       job.ID,
+		State:       "TASK_WAITING",
+	}
+	err := core.AddTask(task.ID, task)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (core *Core) CreateBuildImageTaskInfo(offer *mesosproto.Offer, resources []*mesosproto.Resource, task *registry.Task) (*mesosproto.TaskInfo, error) {
+	log.Debugf("Build image taskInfo of task(%v)", task.ID)
+	job, err := core.GetJob(task.JobID)
+	if err != nil {
+		return nil, err
+	}
+
+	if exists := job.DockerfileExists(); !exists {
+		return nil, errors.New("Cannot found Dockerfile in context directory.")
+	}
+
+	job.Dockerfile = docker.NewDockerfile("dockerfile-"+job.ID, job.ContextDir)
+	if job.Dockerfile.HasLocalSources() {
+		err := job.Dockerfile.BuildContext()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	executorInfo := &mesosproto.ExecutorInfo{
+		ExecutorId: &mesosproto.ExecutorID{
+			Value: proto.String(task.ID),
+		},
+		Name: proto.String("Build Image (APT-MESOS)"),
+		Command: &mesosproto.CommandInfo{
+			Value: proto.String("cmd"),
+		},
+	}
+	return &mesosproto.TaskInfo{
+		Executor:  executorInfo,
+		Resources: resources,
+		SlaveId:   offer.SlaveId,
+		TaskId: &mesosproto.TaskID{
+			Value: proto.String(task.ID),
+		},
+	}, nil
+}

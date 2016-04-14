@@ -60,7 +60,10 @@ type Task struct {
 	ExecutorID    string `json:"executor_id"`
 	Directory     string `json:"directory"`
 	CreatedTime   int64  `json:"create_time"`
-	TaskInfo      *mesosproto.TaskInfo
+
+	TaskInfo *mesosproto.TaskInfo
+	Type     TaskType `enum=TaskType,json:"type,omitempty"`
+	JobID    string   `json:"job_id"`
 }
 
 // DockerTask is docker information struct
@@ -94,3 +97,10 @@ type Usage struct {
 	Total     uint64    `json:"total"`
 	Timestamp time.Time `json:"timestamp"`
 }
+
+type TaskType int32
+
+const (
+	TaskType_Test  TaskType = 0
+	TaskType_Build TaskType = 1
+)
