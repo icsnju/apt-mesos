@@ -30,3 +30,5 @@ static/bower_components
 apt-mesos
 static/lib
 temp/*
+test.sh
+test-debug.sh

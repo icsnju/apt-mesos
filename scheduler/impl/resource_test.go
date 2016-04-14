@@ -1,11 +1,10 @@
-package test
+package impl
 
 import (
 	"testing"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/icsnju/apt-mesos/mesosproto"
-	schedule "github.com/icsnju/apt-mesos/scheduler/impl"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -35,7 +34,7 @@ func TestRangeAdd(t *testing.T) {
 		rangesA.Range = append(rangesA.Range, range3)
 		rangesA.Range = append(rangesA.Range, range4)
 
-		rangeC := schedule.RangeAdd(rangesA, rangesB)
+		rangeC := RangeAdd(rangesA, rangesB)
 		So(rangeC.Range[0].GetBegin(), ShouldEqual, 10)
 		So(rangeC.Range[1].GetEnd(), ShouldEqual, 28)
 	})
@@ -43,7 +42,7 @@ func TestRangeAdd(t *testing.T) {
 
 func TestRangeParse(t *testing.T) {
 	Convey("range parse", t, func() {
-		ranges, err := schedule.ParseRanges("[31000-31500, 31502-31504, 31505-31200] ")
+		ranges, err := ParseRanges("[31000-31500, 31502-31504, 31505-31200] ")
 		So(err, ShouldBeNil)
 		So(ranges.Range[0].GetBegin(), ShouldEqual, 31000)
 		So(ranges.Range[2].GetEnd(), ShouldEqual, 31200)

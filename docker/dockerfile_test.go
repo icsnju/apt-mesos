@@ -1,14 +1,14 @@
 package docker
 
 import (
+	"os"
 	"testing"
 
-	"github.com/icsnju/apt-mesos/docker"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 var (
-	dockerfile = docker.NewDockerfile("123", "../examples/docker_context", "")
+	dockerfile = NewDockerfile("123", "../examples/docker_context")
 )
 
 func TestParse(t *testing.T) {
@@ -30,5 +30,6 @@ func TestBuildContext(t *testing.T) {
 	Convey("build context", t, func() {
 		err := dockerfile.BuildContext()
 		So(err, ShouldBeNil)
+		defer os.RemoveAll("./temp")
 	})
 }
