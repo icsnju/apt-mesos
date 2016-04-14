@@ -7,6 +7,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/gogo/protobuf/proto"
+	comm "github.com/icsnju/apt-mesos/communication"
 	"github.com/icsnju/apt-mesos/mesosproto"
 )
 

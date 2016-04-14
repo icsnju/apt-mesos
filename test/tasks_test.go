@@ -11,7 +11,8 @@ import (
 var (
 	c    = core.NewCore("192.168.33.1:3030", "192.168.33.10:5050")
 	task = &registry.Task{
-		ID: "1",
+		ID:    "1",
+		State: "TASK_WAITING",
 	}
 )
 
