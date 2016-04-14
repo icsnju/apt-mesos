@@ -1,4 +1,4 @@
-.PHONY: all deps test validate lint
+.PHONY: all deps test validate 
 
 all: deps test validate
 

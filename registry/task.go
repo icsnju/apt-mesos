@@ -84,15 +84,6 @@ type DockerState struct {
 	Pid uint `json:"Pid"`
 }
 
-// TestTask returns a task for testing
-func TestTask(id string) *Task {
-	return &Task{
-		ID:          id,
-		DockerImage: "ubuntu",
-		Command:     "echo `hello sher`",
-	}
-}
-
 type Usage struct {
 	Total     uint64    `json:"total"`
 	Timestamp time.Time `json:"timestamp"`

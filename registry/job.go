@@ -22,6 +22,7 @@ func (job *Job) DockerfileExists() bool {
 		if !utils.Exists(dockerfilePath) {
 			return false
 		}
+		return true
 	}
-	return true
+	return false
 }

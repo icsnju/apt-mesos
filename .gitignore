@@ -32,3 +32,4 @@ static/lib
 temp/*
 test.sh
 test-debug.sh
+coverage.out
