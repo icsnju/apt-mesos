@@ -4,7 +4,6 @@ import (
 	"errors"
 
 	"github.com/gogo/protobuf/proto"
-	comm "github.com/icsnju/apt-mesos/communication"
 	"github.com/icsnju/apt-mesos/mesosproto"
 	"github.com/icsnju/apt-mesos/registry"
 )
@@ -67,8 +66,8 @@ func (core *Core) KillTask(id string) error {
 		FrameworkId: &mesosproto.FrameworkID{Value: &frameworkID},
 		TaskId:      &mesosproto.TaskID{Value: &id},
 	}
-	messagePackage := comm.NewMessage(core.masterUPID, message, nil)
-	return comm.SendMessageToMesos(core.coreUPID, messagePackage)
+	messagePackage := NewMessage(core.masterUPID, message, nil)
+	return SendMessageToMesos(core.coreUPID, messagePackage)
 }
 
 // FilterTask filter task by func

@@ -8,7 +8,6 @@ import (
 	log "github.com/Sirupsen/logrus"
 	client "github.com/google/cadvisor/client/v2"
 	info "github.com/google/cadvisor/info/v2"
-	comm "github.com/icsnju/apt-mesos/communication"
 	"github.com/icsnju/apt-mesos/registry"
 )
 
@@ -75,7 +74,7 @@ func (core *Core) updateTasksByMetrics(metrics *registry.MetricsData) {
 			} else {
 				if task.SlaveID == slave.ID {
 					task.SlavePID = slave.PID
-					upid, err := comm.Parse(task.SlavePID)
+					upid, err := Parse(task.SlavePID)
 					if err != nil {
 						continue
 					}

@@ -9,10 +9,10 @@ import (
 	"time"
 
 	"github.com/gogo/protobuf/proto"
-	comm "github.com/icsnju/apt-mesos/communication"
 	"github.com/icsnju/apt-mesos/mesosproto"
 	"github.com/icsnju/apt-mesos/registry"
 	scheduler "github.com/icsnju/apt-mesos/scheduler/impl"
+	"github.com/icsnju/apt-mesos/scheduler/impl/resource"
 
 	log "github.com/Sirupsen/logrus"
 )
@@ -22,8 +22,8 @@ type Core struct {
 	addr          string
 	master        string
 	frameworkInfo *mesosproto.FrameworkInfo
-	masterUPID    *comm.UPID
-	coreUPID      *comm.UPID
+	masterUPID    *UPID
+	coreUPID      *UPID
 	events        Events
 	tasks         registry.Registry
 	nodes         registry.Registry
@@ -67,7 +67,7 @@ func (core *Core) Run() error {
 	}
 
 	// add masterUPID and coreUPID
-	m, err := comm.Parse("master@" + core.master)
+	m, err := Parse("master@" + core.master)
 	if err != nil {
 		return err
 	}
@@ -77,7 +77,7 @@ func (core *Core) Run() error {
 	if err != nil {
 		return err
 	}
-	core.coreUPID = &comm.UPID{
+	core.coreUPID = &UPID{
 		ID:   "core",
 		Host: host,
 		Port: port,
@@ -96,10 +96,10 @@ func (core *Core) Run() error {
 	message := &mesosproto.RegisterFrameworkMessage{
 		Framework: core.frameworkInfo,
 	}
-	messagePackage := comm.NewMessage(core.masterUPID, message, nil)
+	messagePackage := NewMessage(core.masterUPID, message, nil)
 
 	log.Debugf("Registering with master %s [%s] ", core.masterUPID, message)
-	err = comm.SendMessageToMesos(core.coreUPID, messagePackage)
+	err = SendMessageToMesos(core.coreUPID, messagePackage)
 	if err != nil {
 		return err
 	}
@@ -182,12 +182,12 @@ func (core *Core) RequestOffers() ([]*mesosproto.Offer, error) {
 			FrameworkId: core.frameworkInfo.Id,
 			Requests: []*mesosproto.Request{
 				&mesosproto.Request{
-					Resources: scheduler.BuildEmptyResources(),
+					Resources: resource.BuildEmptyResources(),
 				},
 			},
 		}
-		messagePackage := comm.NewMessage(core.masterUPID, message, nil)
-		if err := comm.SendMessageToMesos(core.coreUPID, messagePackage); err != nil {
+		messagePackage := NewMessage(core.masterUPID, message, nil)
+		if err := SendMessageToMesos(core.coreUPID, messagePackage); err != nil {
 			return nil, err
 		}
 
@@ -206,8 +206,8 @@ func (core *Core) AcceptOffer(offer *mesosproto.Offer, resources []*mesosproto.R
 		Filters:     &mesosproto.Filters{},
 	}
 
-	messagePackage := comm.NewMessage(core.masterUPID, message, nil)
-	if err := comm.SendMessageToMesos(core.coreUPID, messagePackage); err != nil {
+	messagePackage := NewMessage(core.masterUPID, message, nil)
+	if err := SendMessageToMesos(core.coreUPID, messagePackage); err != nil {
 		log.Errorf("Failed to send AcceptOffer message: %v\n", err)
 	}
 	return nil
@@ -222,8 +222,8 @@ func (core *Core) DeclineOffer(offer *mesosproto.Offer, task *registry.Task) err
 		Filters:     &mesosproto.Filters{},
 	}
 
-	messagePackage := comm.NewMessage(core.masterUPID, message, nil)
-	if err := comm.SendMessageToMesos(core.coreUPID, messagePackage); err != nil {
+	messagePackage := NewMessage(core.masterUPID, message, nil)
+	if err := SendMessageToMesos(core.coreUPID, messagePackage); err != nil {
 		log.Errorf("Failed to send DeclineOffer message: %v\n", err)
 	}
 	return nil
@@ -232,7 +232,7 @@ func (core *Core) DeclineOffer(offer *mesosproto.Offer, task *registry.Task) err
 // LaunchTask with specific offer and resources
 func (core *Core) LaunchTask(task *registry.Task, offer *mesosproto.Offer, offers []*mesosproto.Offer) error {
 	core.generateResource(task)
-	resources := scheduler.BuildResources(task)
+	resources := resource.BuildResources(task)
 
 	log.Infof("Launch task %v, on node %v", task.ID, offer.GetHostname())
 	taskInfo := &mesosproto.TaskInfo{}

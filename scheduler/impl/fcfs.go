@@ -4,6 +4,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/icsnju/apt-mesos/mesosproto"
 	"github.com/icsnju/apt-mesos/registry"
+	"github.com/icsnju/apt-mesos/scheduler/impl/resource"
 )
 
 // FCFSScheduler implements scheduler using FCFS algorithm
@@ -20,7 +21,7 @@ func (scheduler *FCFSScheduler) Schedule(tasks []*registry.Task, offers []*mesos
 	queue := registry.NewFCFSQueue(tasks)
 	for _, task := range queue {
 		for _, offer := range offers {
-			if ResourcesMatch(task, offer) && ConstraintsMatch(task, offer) {
+			if resource.ResourcesMatch(task, offer) && resource.ConstraintsMatch(task, offer) {
 				return task, offer, true
 			}
 		}

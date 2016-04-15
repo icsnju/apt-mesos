@@ -1,4 +1,4 @@
-package impl
+package resource
 
 import (
 	"testing"
@@ -8,29 +8,41 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
+var (
+	range1 = &mesosproto.Value_Range{
+		Begin: proto.Uint64(10),
+		End:   proto.Uint64(15),
+	}
+	range2 = &mesosproto.Value_Range{
+		Begin: proto.Uint64(21),
+		End:   proto.Uint64(25),
+	}
+	range3 = &mesosproto.Value_Range{
+		Begin: proto.Uint64(16),
+		End:   proto.Uint64(19),
+	}
+	range4 = &mesosproto.Value_Range{
+		Begin: proto.Uint64(26),
+		End:   proto.Uint64(28),
+	}
+	range5 = &mesosproto.Value_Range{
+		Begin: proto.Uint64(11),
+		End:   proto.Uint64(13),
+	}
+	range6 = &mesosproto.Value_Range{
+		Begin: proto.Uint64(11),
+		End:   proto.Uint64(16),
+	}
+)
+
 func TestRangeAdd(t *testing.T) {
 	Convey("range add", t, func() {
 		rangesA := &mesosproto.Value_Ranges{}
-		range1 := &mesosproto.Value_Range{
-			Begin: proto.Uint64(10),
-			End:   proto.Uint64(15),
-		}
-		range2 := &mesosproto.Value_Range{
-			Begin: proto.Uint64(21),
-			End:   proto.Uint64(25),
-		}
+
 		rangesA.Range = append(rangesA.Range, range1)
 		rangesA.Range = append(rangesA.Range, range2)
 
 		rangesB := &mesosproto.Value_Ranges{}
-		range3 := &mesosproto.Value_Range{
-			Begin: proto.Uint64(16),
-			End:   proto.Uint64(19),
-		}
-		range4 := &mesosproto.Value_Range{
-			Begin: proto.Uint64(26),
-			End:   proto.Uint64(28),
-		}
 		rangesA.Range = append(rangesA.Range, range3)
 		rangesA.Range = append(rangesA.Range, range4)
 
@@ -50,5 +62,8 @@ func TestRangeParse(t *testing.T) {
 }
 
 func TestRangeInside(t *testing.T) {
-
+	Convey("range inside", t, func() {
+		So(RangeInside(range1, range5), ShouldBeTrue)
+		So(RangeInside(range1, range6), ShouldBeFalse)
+	})
 }
