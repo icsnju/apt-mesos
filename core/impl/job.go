@@ -19,7 +19,7 @@ var (
 )
 
 // CreateSingleTaskInfo build single taskInfo for task
-func (core *Core) CreateSingleTaskInfo(offer *mesosproto.Offer, resources []*mesosproto.Resource, task *registry.Task) *mesosproto.TaskInfo {
+func (core *Core) CreateSingleTaskInfo(offer *mesosproto.Offer, resources []*mesosproto.Resource, task *registry.Task) (*mesosproto.TaskInfo, error) {
 	portResources := []*mesosproto.Value_Range{}
 
 	// Set the docker image if specified
@@ -87,7 +87,7 @@ func (core *Core) CreateSingleTaskInfo(offer *mesosproto.Offer, resources []*mes
 	}
 
 	taskInfo := &mesosproto.TaskInfo{
-		Name:      proto.String(fmt.Sprintf("task-%s", task.ID)),
+		Name:      proto.String(fmt.Sprintf("test-%s", task.ID)),
 		TaskId:    &mesosproto.TaskID{Value: &task.ID},
 		SlaveId:   offer.SlaveId,
 		Container: containerInfo,
@@ -106,7 +106,7 @@ func (core *Core) CreateSingleTaskInfo(offer *mesosproto.Offer, resources []*mes
 		taskInfo.Command.Arguments = commands[1:]
 	}
 
-	return taskInfo
+	return taskInfo, nil
 }
 
 func (core *Core) StartJob(job *registry.Job) error {
@@ -156,21 +156,35 @@ func (core *Core) CreateBuildImageTaskInfo(offer *mesosproto.Offer, resources []
 		}
 	}
 
+	contextServePath := "http://" + core.GetAddr() + "/context/" + job.Dockerfile.ID + ".tar"
+	executorServePath := "http://" + core.GetAddr() + "/executor/image_builder"
+	log.Debugf("Context file served on path: %v", contextServePath)
+
+	executorUris := []*mesosproto.CommandInfo_URI{
+		{
+			Value:      &executorServePath,
+			Executable: proto.Bool(true),
+		},
+	}
+
 	executorInfo := &mesosproto.ExecutorInfo{
 		ExecutorId: &mesosproto.ExecutorID{
 			Value: proto.String(task.ID),
 		},
 		Name: proto.String("Build Image (APT-MESOS)"),
 		Command: &mesosproto.CommandInfo{
-			Value: proto.String("cmd"),
+			Uris:  executorUris,
+			Value: proto.String("ls"),
 		},
 	}
 	return &mesosproto.TaskInfo{
 		Executor:  executorInfo,
+		Name:      proto.String(fmt.Sprintf("build image for job: %s", task.JobID)),
 		Resources: resources,
 		SlaveId:   offer.SlaveId,
 		TaskId: &mesosproto.TaskID{
 			Value: proto.String(task.ID),
 		},
+		Data: []byte(contextServePath),
 	}, nil
 }

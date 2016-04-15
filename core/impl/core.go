@@ -236,19 +236,17 @@ func (core *Core) LaunchTask(task *registry.Task, offer *mesosproto.Offer, offer
 
 	log.Infof("Launch task %v, on node %v", task.ID, offer.GetHostname())
 	taskInfo := &mesosproto.TaskInfo{}
+	var err error
 	if task.Type == registry.TaskType_Test {
-		taskInfo = core.CreateSingleTaskInfo(offer, resources, task)
+		taskInfo, err = core.CreateSingleTaskInfo(offer, resources, task)
 	} else if task.Type == registry.TaskType_Build {
-		taskInfo, err := core.CreateBuildImageTaskInfo(offer, resources, task)
-		if err != nil {
-			return err
-		}
-
-		// TODO
-		log.Debug(taskInfo)
-		return nil
+		taskInfo, err = core.CreateBuildImageTaskInfo(offer, resources, task)
 	} else {
 		return errors.New("Unknown task type received.")
+	}
+
+	if err != nil {
+		return err
 	}
 
 	for _, value := range offers {

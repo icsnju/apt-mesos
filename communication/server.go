@@ -85,6 +85,12 @@ func ListenAndServe(addr string, core core.Core) {
 	m.Use(logger())
 	m.Use(recovery())
 	m.Use(martini.Static("static"))
+	m.Use(martini.Static("temp", martini.StaticOptions{
+		Prefix: "/context/",
+	}))
+	m.Use(martini.Static("executor", martini.StaticOptions{
+		Prefix: "/executor/",
+	}))
 	m.Action(r.Handle)
 	go m.RunOnAddr(addr)
 }
