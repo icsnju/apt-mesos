@@ -40,6 +40,8 @@ func createRouter(core core.Core, clientHandlers *clientAPI.Handler, mesosHandle
 	router.Delete("/api/tasks/:id", clientHandlers.DeleteTask())
 	router.Put("/api/tasks/:id/kill", clientHandlers.KillTask())
 	router.Get("/api/tasks/:id/file/:file", clientHandlers.GetFile())
+	router.Get("/api/jobs", clientHandlers.ListJobs())
+	router.Post("/api/jobs", clientHandlers.CreateJob())
 	router.Get("/api/nodes", clientHandlers.GetNodes())
 	router.Get("/api/system/usage", clientHandlers.SystemUsage())
 
@@ -83,6 +85,12 @@ func ListenAndServe(addr string, core core.Core) {
 	m.Use(logger())
 	m.Use(recovery())
 	m.Use(martini.Static("static"))
+	m.Use(martini.Static("temp", martini.StaticOptions{
+		Prefix: "/context/",
+	}))
+	m.Use(martini.Static("executor", martini.StaticOptions{
+		Prefix: "/executor/",
+	}))
 	m.Action(r.Handle)
 	go m.RunOnAddr(addr)
 }

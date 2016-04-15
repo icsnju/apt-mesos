@@ -6,10 +6,9 @@ import (
 	log "github.com/Sirupsen/logrus"
 	client "github.com/google/cadvisor/client/v2"
 	info "github.com/google/cadvisor/info/v2"
-	comm "github.com/icsnju/apt-mesos/communication"
 	"github.com/icsnju/apt-mesos/mesosproto"
 	"github.com/icsnju/apt-mesos/registry"
-	scheduler "github.com/icsnju/apt-mesos/scheduler/impl"
+	resourceManager "github.com/icsnju/apt-mesos/scheduler/impl/resource"
 )
 
 // Update node information by MESOS-OFFERS
@@ -47,7 +46,7 @@ func (core *Core) updateNodeByTask(id string, task *registry.Task) {
 			node.OfferedResources[resource.GetName()].Scalar.Value = &newScalar
 		} else if resource.GetType().String() == "RANGES" {
 			// Update ranges
-			node.OfferedResources[resource.GetName()].Ranges = scheduler.RangeUsedUpdate(resource.GetRanges(), node.OfferedResources[resource.GetName()].GetRanges())
+			node.OfferedResources[resource.GetName()].Ranges = resourceManager.RangeUsedUpdate(resource.GetRanges(), node.OfferedResources[resource.GetName()].GetRanges())
 		}
 	}
 	node.Tasks = append(node.Tasks, task)
@@ -79,14 +78,14 @@ func (core *Core) updateNodesByMetrics() {
 
 				// update node host for the first time
 				if node.Host == "" {
-					upid, err := comm.Parse(slave.PID)
+					upid, err := Parse(slave.PID)
 					if err != nil {
 						continue
 					}
 					node.Host = upid.Host
 				}
 
-				offeredResources := scheduler.BuildResourcesFromMap(slave.OfferedResources)
+				offeredResources := resourceManager.BuildResourcesFromMap(slave.OfferedResources)
 				node.OfferedResources = offeredResources
 
 				log.Debugf("Node %v status updated: %v", node.Hostname, node.OfferedResources["ports"])

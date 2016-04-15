@@ -1,6 +1,7 @@
 package impl
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -8,10 +9,10 @@ import (
 	"time"
 
 	"github.com/gogo/protobuf/proto"
-	comm "github.com/icsnju/apt-mesos/communication"
 	"github.com/icsnju/apt-mesos/mesosproto"
 	"github.com/icsnju/apt-mesos/registry"
 	scheduler "github.com/icsnju/apt-mesos/scheduler/impl"
+	"github.com/icsnju/apt-mesos/scheduler/impl/resource"
 
 	log "github.com/Sirupsen/logrus"
 )
@@ -21,11 +22,12 @@ type Core struct {
 	addr          string
 	master        string
 	frameworkInfo *mesosproto.FrameworkInfo
-	masterUPID    *comm.UPID
-	coreUPID      *comm.UPID
+	masterUPID    *UPID
+	coreUPID      *UPID
 	events        Events
 	tasks         registry.Registry
 	nodes         registry.Registry
+	jobs          registry.Registry
 	scheduler     scheduler.FCFSScheduler
 
 	Endpoints map[string]map[string]func(w http.ResponseWriter, r *http.Request) error
@@ -48,6 +50,7 @@ func NewCore(addr string, master string) *Core {
 		events:        NewEvents(),
 		tasks:         *registry.NewRegistry(),
 		nodes:         *registry.NewRegistry(),
+		jobs:          *registry.NewRegistry(),
 		scheduler:     *scheduler.NewScheduler(),
 		Endpoints:     nil,
 	}
@@ -64,7 +67,7 @@ func (core *Core) Run() error {
 	}
 
 	// add masterUPID and coreUPID
-	m, err := comm.Parse("master@" + core.master)
+	m, err := Parse("master@" + core.master)
 	if err != nil {
 		return err
 	}
@@ -74,7 +77,7 @@ func (core *Core) Run() error {
 	if err != nil {
 		return err
 	}
-	core.coreUPID = &comm.UPID{
+	core.coreUPID = &UPID{
 		ID:   "core",
 		Host: host,
 		Port: port,
@@ -93,10 +96,10 @@ func (core *Core) Run() error {
 	message := &mesosproto.RegisterFrameworkMessage{
 		Framework: core.frameworkInfo,
 	}
-	messagePackage := comm.NewMessage(core.masterUPID, message, nil)
+	messagePackage := NewMessage(core.masterUPID, message, nil)
 
 	log.Debugf("Registering with master %s [%s] ", core.masterUPID, message)
-	err = comm.SendMessageToMesos(core.coreUPID, messagePackage)
+	err = SendMessageToMesos(core.coreUPID, messagePackage)
 	if err != nil {
 		return err
 	}
@@ -179,12 +182,12 @@ func (core *Core) RequestOffers() ([]*mesosproto.Offer, error) {
 			FrameworkId: core.frameworkInfo.Id,
 			Requests: []*mesosproto.Request{
 				&mesosproto.Request{
-					Resources: scheduler.BuildEmptyResources(),
+					Resources: resource.BuildEmptyResources(),
 				},
 			},
 		}
-		messagePackage := comm.NewMessage(core.masterUPID, message, nil)
-		if err := comm.SendMessageToMesos(core.coreUPID, messagePackage); err != nil {
+		messagePackage := NewMessage(core.masterUPID, message, nil)
+		if err := SendMessageToMesos(core.coreUPID, messagePackage); err != nil {
 			return nil, err
 		}
 
@@ -195,9 +198,7 @@ func (core *Core) RequestOffers() ([]*mesosproto.Offer, error) {
 }
 
 // AcceptOffer send message to mesos-master to accept a offer
-func (core *Core) AcceptOffer(offer *mesosproto.Offer, resources []*mesosproto.Resource, task *registry.Task) error {
-	log.Infof("Launch task %v, command(%v), docker_image(%v) on node %v", task.ID, task.Command, task.DockerImage, offer.GetHostname())
-	taskInfo := core.CreateTaskInfo(offer, resources, task)
+func (core *Core) AcceptOffer(offer *mesosproto.Offer, resources []*mesosproto.Resource, taskInfo *mesosproto.TaskInfo) error {
 	message := &mesosproto.LaunchTasksMessage{
 		FrameworkId: core.frameworkInfo.Id,
 		OfferIds:    []*mesosproto.OfferID{offer.Id},
@@ -205,8 +206,8 @@ func (core *Core) AcceptOffer(offer *mesosproto.Offer, resources []*mesosproto.R
 		Filters:     &mesosproto.Filters{},
 	}
 
-	messagePackage := comm.NewMessage(core.masterUPID, message, nil)
-	if err := comm.SendMessageToMesos(core.coreUPID, messagePackage); err != nil {
+	messagePackage := NewMessage(core.masterUPID, message, nil)
+	if err := SendMessageToMesos(core.coreUPID, messagePackage); err != nil {
 		log.Errorf("Failed to send AcceptOffer message: %v\n", err)
 	}
 	return nil
@@ -221,111 +222,36 @@ func (core *Core) DeclineOffer(offer *mesosproto.Offer, task *registry.Task) err
 		Filters:     &mesosproto.Filters{},
 	}
 
-	messagePackage := comm.NewMessage(core.masterUPID, message, nil)
-	if err := comm.SendMessageToMesos(core.coreUPID, messagePackage); err != nil {
+	messagePackage := NewMessage(core.masterUPID, message, nil)
+	if err := SendMessageToMesos(core.coreUPID, messagePackage); err != nil {
 		log.Errorf("Failed to send DeclineOffer message: %v\n", err)
 	}
 	return nil
 }
 
-// CreateTaskInfo build taskInfo for task
-func (core *Core) CreateTaskInfo(offer *mesosproto.Offer, resources []*mesosproto.Resource, task *registry.Task) *mesosproto.TaskInfo {
-	portResources := []*mesosproto.Value_Range{}
-
-	// Set the docker image if specified
-	dockerInfo := &mesosproto.ContainerInfo_DockerInfo{
-		Image: &task.DockerImage,
-	}
-	containerInfo := &mesosproto.ContainerInfo{
-		Type:   mesosproto.ContainerInfo_DOCKER.Enum(),
-		Docker: dockerInfo,
-	}
-	for _, volume := range task.Volumes {
-		mode := mesosproto.Volume_RW
-		if volume.Mode == "ro" {
-			mode = mesosproto.Volume_RO
-		}
-
-		containerInfo.Volumes = append(containerInfo.Volumes, &mesosproto.Volume{
-			ContainerPath: &volume.ContainerPath,
-			HostPath:      &volume.HostPath,
-			Mode:          &mode,
-		})
-	}
-
-	for _, port := range task.Ports {
-		dockerInfo.PortMappings = append(dockerInfo.PortMappings, &mesosproto.ContainerInfo_DockerInfo_PortMapping{
-			ContainerPort: &port.ContainerPort,
-			HostPort:      &port.HostPort,
-		})
-		portResources = append(portResources, &mesosproto.Value_Range{
-			Begin: proto.Uint64(uint64(port.HostPort)),
-			End:   proto.Uint64(uint64(port.HostPort)),
-		})
-	}
-
-	if len(task.Ports) > 0 {
-		// port mapping only works in bridge mode
-		dockerInfo.Network = mesosproto.ContainerInfo_DockerInfo_BRIDGE.Enum()
-	} else if len(task.NetworkMode) > 0 {
-		if task.NetworkMode == registry.NetworkModeBridge {
-			dockerInfo.Network = mesosproto.ContainerInfo_DockerInfo_BRIDGE.Enum()
-		} else if task.NetworkMode == registry.NetworkModeHost {
-			dockerInfo.Network = mesosproto.ContainerInfo_DockerInfo_HOST.Enum()
-		} else if task.NetworkMode == registry.NetworkModeNone {
-			dockerInfo.Network = mesosproto.ContainerInfo_DockerInfo_NONE.Enum()
-		}
-	}
-
-	commandInfo := &mesosproto.CommandInfo{
-		Shell: proto.Bool(false),
-	}
-	if len(task.Arguments) > 0 {
-		for _, argument := range task.Arguments {
-			commandInfo.Arguments = append(commandInfo.Arguments, argument)
-		}
-	}
-
-	if len(task.Ports) > 0 {
-		resources = append(resources,
-			&mesosproto.Resource{
-				Name:   proto.String("ports"),
-				Ranges: &mesosproto.Value_Ranges{Range: portResources},
-				Type:   mesosproto.Value_RANGES.Enum(),
-			},
-		)
-	}
-
-	taskInfo := &mesosproto.TaskInfo{
-		Name:      proto.String(fmt.Sprintf("task-%s", task.ID)),
-		TaskId:    &mesosproto.TaskID{Value: &task.ID},
-		SlaveId:   offer.SlaveId,
-		Container: containerInfo,
-		Command:   commandInfo,
-		Resources: resources,
-	}
-
-	// Set value only if provided
-	commands := strings.Split(task.Command, " ")
-	if commands[0] != "" {
-		taskInfo.Command.Value = &commands[0]
-	}
-
-	// Set args only if they exist
-	if len(commands) > 1 {
-		taskInfo.Command.Arguments = commands[1:]
-	}
-
-	return taskInfo
-}
-
 // LaunchTask with specific offer and resources
 func (core *Core) LaunchTask(task *registry.Task, offer *mesosproto.Offer, offers []*mesosproto.Offer) error {
 	core.generateResource(task)
-	resources := scheduler.BuildResources(task)
+	resources := resource.BuildResources(task)
+
+	log.Infof("Launch task %v, on node %v", task.ID, offer.GetHostname())
+	taskInfo := &mesosproto.TaskInfo{}
+	var err error
+	if task.Type == registry.TaskType_Test {
+		taskInfo, err = core.CreateSingleTaskInfo(offer, resources, task)
+	} else if task.Type == registry.TaskType_Build {
+		taskInfo, err = core.CreateBuildImageTaskInfo(offer, resources, task)
+	} else {
+		return errors.New("Unknown task type received.")
+	}
+
+	if err != nil {
+		return err
+	}
+
 	for _, value := range offers {
 		if offer.GetSlaveId() == value.GetSlaveId() {
-			if err := core.AcceptOffer(value, resources, task); err != nil {
+			if err := core.AcceptOffer(value, resources, taskInfo); err != nil {
 				return err
 			}
 			task.State = "TASK_STAGING"
@@ -336,63 +262,5 @@ func (core *Core) LaunchTask(task *registry.Task, offer *mesosproto.Offer, offer
 			}
 		}
 	}
-	return nil
-}
-
-// HandleFrameworkRegisteredMessage called when framework register to mesos-master
-func (core *Core) HandleFrameworkRegisteredMessage(message *mesosproto.FrameworkRegisteredMessage) {
-	log.WithField("frameworkId", message.FrameworkId).Debug("Receive framworkId from mesos master")
-	core.frameworkInfo.Id = message.FrameworkId
-
-	eventType := mesosproto.Event_REGISTERED
-	core.AddEvent(eventType, &mesosproto.Event{
-		Type: &eventType,
-		Registered: &mesosproto.Event_Registered{
-			FrameworkId: message.FrameworkId,
-			MasterInfo:  message.MasterInfo,
-		},
-	})
-}
-
-// HandleResourceOffersMessage called when framework receive offers from master
-func (core *Core) HandleResourceOffersMessage(message *mesosproto.ResourceOffersMessage) {
-	eventType := mesosproto.Event_OFFERS
-	core.AddEvent(eventType, &mesosproto.Event{
-		Type: &eventType,
-		Offers: &mesosproto.Event_Offers{
-			Offers: message.Offers,
-		},
-	})
-}
-
-// HandleStatusUpdateMessage called when slave's status updated
-func (core *Core) HandleStatusUpdateMessage(statusMessage *mesosproto.StatusUpdateMessage) error {
-	status := statusMessage.GetUpdate().GetStatus()
-	if status.GetState() == mesosproto.TaskState_TASK_RUNNING {
-		task, _ := core.GetTask(status.GetTaskId().GetValue())
-		core.updateTaskByDockerInfo(task, status.GetData())
-	}
-
-	message := &mesosproto.StatusUpdateAcknowledgementMessage{
-		FrameworkId: statusMessage.GetUpdate().FrameworkId,
-		SlaveId:     statusMessage.GetUpdate().Status.SlaveId,
-		TaskId:      statusMessage.GetUpdate().Status.TaskId,
-		Uuid:        statusMessage.GetUpdate().Uuid,
-	}
-	messagePackage := comm.NewMessage(core.masterUPID, message, nil)
-	if err := comm.SendMessageToMesos(core.coreUPID, messagePackage); err != nil {
-		log.Errorf("Failed to send StatusAccept message: %v\n", err)
-		return err
-	}
-
-	eventType := mesosproto.Event_UPDATE
-	core.AddEvent(eventType, &mesosproto.Event{
-		Type: &eventType,
-		Update: &mesosproto.Event_Update{
-			Uuid:   statusMessage.Update.Uuid,
-			Status: statusMessage.Update.Status,
-		},
-	})
-
 	return nil
 }

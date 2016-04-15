@@ -1,17 +1,17 @@
-package test
+package impl
 
 import (
 	"testing"
 
-	core "github.com/icsnju/apt-mesos/core/impl"
 	"github.com/icsnju/apt-mesos/registry"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 var (
-	c    = core.NewCore("192.168.33.1:3030", "192.168.33.10:5050")
+	c    = NewCore("192.168.33.1:3030", "192.168.33.10:5050")
 	task = &registry.Task{
-		ID: "1",
+		ID:    "1",
+		State: "TASK_WAITING",
 	}
 )
 

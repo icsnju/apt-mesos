@@ -5,31 +5,39 @@ import (
 	"bytes"
 	"log"
 	"os"
+	"path"
 	"strings"
 )
 
 type Dockerfile struct {
+	ID                   string
 	Instructions         []*Instruction
 	InternalInstructions []*Instruction
+	Path                 string
 	Registry             string
 	Repository           string
 }
 
+// Instruction of dockerfile
 type Instruction struct {
 	Command   string
 	Arguments []string
 }
 
+// INTERNAL is internal build commands
 var INTERNAL = []string{"REGISTRY", "REPOSITORY", "BUILD_CPU", "BUILD_MEM"}
 
-func NewDockerfile(file string, registry string) *Dockerfile {
+// NewDockerfile return new dockerfile
+func NewDockerfile(ID, filePath string) *Dockerfile {
 	dockerfile := &Dockerfile{
+		ID:                   ID,
 		Instructions:         []*Instruction{},
 		InternalInstructions: []*Instruction{},
-		Registry:             registry,
+		Registry:             "",
 		Repository:           "",
+		Path:                 filePath,
 	}
-	dockerfile.parse(file)
+	dockerfile.parse(path.Join(filePath, "Dockerfile"))
 	return dockerfile
 }
 
@@ -76,6 +84,7 @@ func (d *Dockerfile) addInstruction(instruction string) {
 	})
 }
 
+// Build return full output of dockerfile
 func (d *Dockerfile) Build() string {
 	buffer := bytes.NewBufferString("")
 	for _, i := range d.Instructions {
@@ -84,6 +93,7 @@ func (d *Dockerfile) Build() string {
 	return buffer.String()
 }
 
+// HasLocalSources check if dockerfile has local resources
 func (d *Dockerfile) HasLocalSources() bool {
 	for _, i := range d.Instructions {
 		if i.Command == "ADD" || i.Command == "COPY" {

@@ -64,7 +64,7 @@ func (h *Handler) AddTask() martini.Handler {
 			writeError(w, err)
 			return
 		}
-		task.ID = hex.EncodeToString(id)
+		task.ID = "task-" + hex.EncodeToString(id)
 		task.CreatedTime = time.Now().UnixNano()
 		task.State = "TASK_WAITING"
 		log.Debugf("Receive task: %v", task)
@@ -143,6 +143,56 @@ func (h *Handler) DeleteTask() martini.Handler {
 		}
 
 		writeResponse(w, http.StatusOK, "Successful deleted task")
+	}
+}
+
+// CreateJob is the endpoint to create a new job
+// method: POST
+// path:  /api/jobs
+func (h *Handler) CreateJob() martini.Handler {
+	return func(w http.ResponseWriter, r *http.Request) {
+		job := &registry.Job{}
+		if err := json.NewDecoder(r.Body).Decode(&job); err != nil {
+			log.Fatal(err)
+			writeError(w, err)
+			return
+		}
+
+		// generate task id
+		id := make([]byte, 6)
+		n, err := rand.Read(id)
+		if n != len(id) || err != nil {
+			writeError(w, err)
+			return
+		}
+		job.ID = hex.EncodeToString(id)
+		job.CreateTime = time.Now().UnixNano()
+
+		log.WithField("Job", job).Infof("Receive job: %v", job.ID)
+		err = h.core.AddJob(job.ID, job)
+		if err != nil {
+			writeError(w, err)
+			return
+		}
+
+		err = h.core.StartJob(job)
+		if err != nil {
+			writeError(w, err)
+			return
+		}
+
+		writeResponse(w, http.StatusOK, job.ID)
+	}
+}
+
+// ListJobs list all jobs
+// method:		GET
+// path:		/api/tasks
+func (h *Handler) ListJobs() martini.Handler {
+	return func(w http.ResponseWriter, r *http.Request) {
+		jobs := h.core.GetAllJobs()
+
+		writeResponse(w, http.StatusOK, jobs)
 	}
 }
 

@@ -1,32 +1,38 @@
 package docker
 
 import (
-	"fmt"
+	"os"
 	"path"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/icsnju/apt-mesos/utils"
 )
 
-func (dockerfile *Dockerfile) BuildContext() {
+var (
+	TEMPDIR = "./temp"
+)
+
+func (dockerfile *Dockerfile) BuildContext() error {
+
 	if !dockerfile.HasLocalSources() {
-		return
+		return nil
 	}
 
-	var workDir = ""
-	for _, instruction := range dockerfile.Instructions {
-		if instruction.Command == "WORKDIR" {
-			workDir = instruction.Arguments[0]
-		}
-		if instruction.Command == "ADD" || instruction.Command == "COPY" {
-			localPath, remotePath := instruction.Arguments[0], instruction.Arguments[1]
-			if path.IsAbs(localPath) {
-				fmt.Println("absolute path")
-			} else {
-				if workDir != "" {
-					localPath = path.Join(workDir, localPath)
-				}
-				fmt.Println("relative path")
-				fmt.Println(localPath)
-				fmt.Println(remotePath)
-			}
-		}
+	// Copy all context to a temp directory
+	tempContextDir := path.Join(TEMPDIR, "context-"+dockerfile.ID)
+	log.Debugf("Build docker context in path: %v", tempContextDir)
+
+	err := utils.CopyDir(dockerfile.Path, tempContextDir)
+	if err != nil {
+		return err
 	}
+	defer os.RemoveAll(tempContextDir)
+
+	tarFile := dockerfile.ID + ".tar"
+	log.Debugf("Tar docker context to path: %v", path.Join(TEMPDIR, tarFile))
+	err = utils.Tar(tempContextDir, path.Join(TEMPDIR, tarFile), false)
+	if err != nil {
+		return err
+	}
+	return nil
 }
