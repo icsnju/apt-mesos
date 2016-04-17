@@ -14,6 +14,11 @@ type Job struct {
 	Dockerfile *docker.Dockerfile `json:"dockerfile"`
 	ContextDir string             `json:"context_dir"`
 	CreateTime int64              `json:"create_time"`
+	Tasks      []*Task            `json:"tasks"`
+	Splitter   string             `json:"splitter"`
+	Input      string             `json:"input"`
+
+	SLAOffers map[string]string
 }
 
 func (job *Job) DockerfileExists() bool {

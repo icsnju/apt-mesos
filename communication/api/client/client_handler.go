@@ -1,8 +1,6 @@
 package client
 
 import (
-	"crypto/rand"
-	"encoding/hex"
 	"encoding/json"
 	"net/http"
 	"time"
@@ -11,6 +9,7 @@ import (
 	"github.com/go-martini/martini"
 	"github.com/icsnju/apt-mesos/core"
 	"github.com/icsnju/apt-mesos/registry"
+	"github.com/icsnju/apt-mesos/utils"
 )
 
 // Handler bring out a interface of Restful API
@@ -52,20 +51,20 @@ func (h *Handler) AddTask() martini.Handler {
 	return func(w http.ResponseWriter, r *http.Request) {
 		task := &registry.Task{}
 		if err := json.NewDecoder(r.Body).Decode(&task); err != nil {
-			log.Fatal(err)
+			log.Errorf("Cannot decode json: %v", err)
 			writeError(w, err)
 			return
 		}
 
 		// generate task id
-		id := make([]byte, 6)
-		n, err := rand.Read(id)
-		if n != len(id) || err != nil {
+		randID, err := utils.Encode(6)
+		if err != nil {
 			writeError(w, err)
 			return
 		}
-		task.ID = "task-" + hex.EncodeToString(id)
-		task.CreatedTime = time.Now().UnixNano()
+
+		task.ID = "task-" + randID
+		task.CreateTime = time.Now().UnixNano()
 		task.State = "TASK_WAITING"
 		log.Debugf("Receive task: %v", task)
 
@@ -153,20 +152,21 @@ func (h *Handler) CreateJob() martini.Handler {
 	return func(w http.ResponseWriter, r *http.Request) {
 		job := &registry.Job{}
 		if err := json.NewDecoder(r.Body).Decode(&job); err != nil {
-			log.Fatal(err)
+			log.Errorf("Cannot decode json: %v", err)
 			writeError(w, err)
 			return
 		}
 
 		// generate task id
-		id := make([]byte, 6)
-		n, err := rand.Read(id)
-		if n != len(id) || err != nil {
+		randID, err := utils.Encode(6)
+		if err != nil {
 			writeError(w, err)
 			return
 		}
-		job.ID = hex.EncodeToString(id)
+
+		job.ID = randID
 		job.CreateTime = time.Now().UnixNano()
+		job.SLAOffers = make(map[string]string)
 
 		log.WithField("Job", job).Infof("Receive job: %v", job.ID)
 		err = h.core.AddJob(job.ID, job)

@@ -10,16 +10,16 @@ func TestFCFSQueue(t *testing.T) {
 	Convey("fcfs queue sort", t, func() {
 		var arr []*Task
 		arr = append(arr, &Task{
-			ID:          "1",
-			CreatedTime: 65,
+			ID:         "1",
+			CreateTime: 65,
 		})
 		arr = append(arr, &Task{
-			ID:          "2",
-			CreatedTime: 75,
+			ID:         "2",
+			CreateTime: 75,
 		})
 		arr = append(arr, &Task{
-			ID:          "3",
-			CreatedTime: 45,
+			ID:         "3",
+			CreateTime: 45,
 		})
 		queue := NewFCFSQueue(arr)
 		So(queue[0].ID, ShouldEqual, "3")

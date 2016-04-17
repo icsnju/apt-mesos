@@ -2,6 +2,7 @@ package registry
 
 import (
 	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/icsnju/apt-mesos/mesosproto"
@@ -59,11 +60,12 @@ type Task struct {
 	SlavePID      string `json:"slave_pid"`
 	ExecutorID    string `json:"executor_id"`
 	Directory     string `json:"directory"`
-	CreatedTime   int64  `json:"create_time"`
+	CreateTime    int64  `json:"create_time"`
 
 	TaskInfo *mesosproto.TaskInfo
 	Type     TaskType `enum=TaskType,json:"type,omitempty"`
 	JobID    string   `json:"job_id"`
+	Scale    int32    `json:"scale"`
 }
 
 // DockerTask is docker information struct
@@ -92,6 +94,17 @@ type Usage struct {
 type TaskType int32
 
 const (
-	TaskType_Test  TaskType = 0
-	TaskType_Build TaskType = 1
+	TaskTypeTest  TaskType = 0
+	TaskTypeBuild TaskType = 1
 )
+
+func (task *Task) Parse() string {
+	if task.JobID == "" {
+		return task.ID
+	}
+	index := strings.LastIndex(task.ID, "#")
+	if index < 0 {
+		return task.ID
+	}
+	return task.ID[0:index]
+}

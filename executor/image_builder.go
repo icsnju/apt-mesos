@@ -70,7 +70,7 @@ func (builder *ImageBuilder) LaunchTask(driver executor.ExecutorDriver, taskInfo
 	// Build image with context
 	var buf bytes.Buffer
 	opts := docker.BuildImageOptions{
-		Name:           "test",
+		Name:           taskInfo.GetName(),
 		ContextDir:     contextDir,
 		SuppressOutput: true,
 		OutputStream:   &buf,

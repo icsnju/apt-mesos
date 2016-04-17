@@ -14,12 +14,6 @@ var (
 	minMem  = 16.0
 )
 
-// ConstraintsMatch check if a offer fit task's constaints
-// TODO implementation
-func ConstraintsMatch(task *registry.Task, offer *mesosproto.Offer) bool {
-	return true
-}
-
 // ResourcesMatch check if a offer fit task's resources
 func ResourcesMatch(task *registry.Task, offer *mesosproto.Offer) bool {
 	BuildBasicResources(task)

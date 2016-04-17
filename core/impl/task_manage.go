@@ -3,6 +3,7 @@ package impl
 import (
 	"errors"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/gogo/protobuf/proto"
 	"github.com/icsnju/apt-mesos/mesosproto"
 	"github.com/icsnju/apt-mesos/registry"
@@ -18,6 +19,7 @@ type filter func(task *registry.Task) bool
 
 // AddTask is called when user submit a task and add the task to the registry
 func (core *Core) AddTask(id string, task *registry.Task) error {
+	log.Debug(id)
 	if err := core.tasks.Add(id, task); err != nil {
 		return err
 	}
