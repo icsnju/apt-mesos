@@ -30,6 +30,7 @@ func (core *Core) updateNodesByOffer(offers []*mesosproto.Offer) {
 				Hostname:       offer.GetHostname(),
 				LastUpdateTime: time.Now().Unix(),
 				Resources:      resources,
+				Attributes:     offer.GetAttributes(),
 			}
 			core.RegisterNode(slaveID, node)
 		}

@@ -21,6 +21,13 @@ func (core *Core) handleOffers(offers []*mesosproto.Offer) []*mesosproto.Offer {
 		if err != nil {
 			continue
 		}
+
+		// add custom node attribute
+		for _, attribute := range node.CustomAttributes {
+			offer.Attributes = append(offer.Attributes, attribute)
+		}
+
+		// add sla attribute
 		set := &mesosproto.Value_Set{}
 		for _, task := range node.GetSLATasks() {
 			taskID := task.Parse()

@@ -22,10 +22,11 @@ var (
 
 func (core *Core) StartJob(job *registry.Job) error {
 	log.Infof("Starting job: %v", job.ID)
-	if job.Image == "" {
-		if job.Dockerfile == nil && job.ContextDir == "" {
-			return errors.New("Start job error: image, dockerfile, context_dir cannot be nil at the same time")
-		}
+	if job.Image == "" && job.ContextDir == "" {
+		return errors.New("Start job error: image, context_dir cannot be nil at the same time")
+	}
+
+	if job.ContextDir != "" {
 		core.BuildImage(job, len(job.Tasks))
 	}
 
@@ -39,6 +40,7 @@ func (core *Core) BuildImage(job *registry.Job, size int) error {
 	// Build Images before run test task
 	// TaskID: build-{JobID}-{randID}-{NumberOfScale}
 	log.Infof("Create task for job(%v) to build image", job.ID)
+	job.Image = "image-" + job.ID
 	for index := 1; index <= size; index++ {
 		task := &registry.Task{
 			Cpus:       BUILD_CPU,
@@ -51,6 +53,7 @@ func (core *Core) BuildImage(job *registry.Job, size int) error {
 			State:      "TASK_WAITING",
 			SLA:        registry.SLAOnePerNode,
 		}
+
 		err := core.AddTask(task.ID, task)
 		if err != nil {
 			log.Errorf("Error when add %d build image task: %v", index, err)
@@ -63,27 +66,53 @@ func (core *Core) BuildImage(job *registry.Job, size int) error {
 func (core *Core) RunTask(job *registry.Job) {
 	// Run test task of specified job
 	// TaskID: test-{JobID}-{randID}-{scaleNumber}
-	for index, task := range job.Tasks {
+	for _, task := range job.Tasks {
 		randID, err := utils.Encode(6)
 		if err != nil {
-			log.Errorf("Error when generate id to task %d of job %v", index, job.ID)
+			log.Errorf("Error when generate id to task %d of job %v", task.ID, job.ID)
 			continue
 		}
 
-		task.JobID = job.ID
-		task.ID = "test-" + job.ID + "-" + randID + "-" + strconv.Itoa(index)
-		task.Name = job.Name + " [RUN TASK]"
-		task.DockerImage = job.Image
-		task.CreateTime = time.Now().UnixNano()
-		task.Type = registry.TaskTypeTest
-		task.State = "TASK_WAITING"
+		if task.Scale <= 0 {
+			task.Scale = 1
+		}
 
-		// err := core.AddTask(task.ID, task)
-		// if err != nil {
-		// 	task.State = "TASK_FAILED"
-		// 	log.Errorf("Error when running task %v: %v", task.ID, err)
-		// 	continue
-		// }
+		for index := 1; index <= task.Scale; index++ {
+			taskInstance := &registry.Task{
+				JobID:       job.ID,
+				ID:          "task-" + job.ID + "-" + randID + "-" + strconv.Itoa(index),
+				Name:        job.Name + " [RUN TASK]",
+				DockerImage: job.Image,
+				Cpus:        task.Cpus,
+				Mem:         task.Mem,
+				Disk:        task.Disk,
+				Ports:       task.Ports,
+				Command:     task.Command,
+				Resources:   task.Resources,
+				Attributes:  task.Attributes,
+				CreateTime:  time.Now().UnixNano(),
+				Type:        registry.TaskTypeTest,
+				State:       "TASK_WAITING",
+			}
+
+			// if task was build from dockerfile
+			// add attribute to task
+			if job.ContextDir != "" {
+				taskInstance.Attributes = append(task.Attributes, &mesosproto.Attribute{
+					Name: proto.String("Image"),
+					Text: &mesosproto.Value_Text{
+						Value: proto.String(job.Image),
+					},
+				})
+			}
+
+			err = core.AddTask(taskInstance.ID, taskInstance)
+			if err != nil {
+				task.State = "TASK_FAILED"
+				log.Errorf("Error when running task %v: %v", task.ID, err)
+				continue
+			}
+		}
 	}
 }
 

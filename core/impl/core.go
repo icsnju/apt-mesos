@@ -124,7 +124,11 @@ func (core *Core) schedule() {
 			// if remained resource can run a task
 			if success {
 				log.Infof("Schedule task result: run task(%v) on %v", task.ID, offer.GetHostname())
-				core.LaunchTask(task, offer, core.offers)
+				err := core.LaunchTask(task, offer, core.offers)
+				if err != nil {
+					log.Error(err)
+					task.State = "TASK_FAILED"
+				}
 				core.updateNodeByTask(offer.GetSlaveId().GetValue(), task)
 			} else {
 				log.Infof("No enough resources remained, wait for other tasks finish")

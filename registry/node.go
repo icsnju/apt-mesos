@@ -11,6 +11,8 @@ type Node struct {
 	IsSlave          bool                            `json:"is_slave"`
 	Resources        map[string]*mesosproto.Resource `json:"resources"`
 	OfferedResources map[string]*mesosproto.Resource `json:"offered_resources"`
+	Attributes       []*mesosproto.Attribute         `json:"attributes"`
+	CustomAttributes []*mesosproto.Attribute         `json:"custom_attributes"`
 	LastUpdateTime   int64                           `json:"last_update_time"`
 
 	MachineInfoFetched bool
