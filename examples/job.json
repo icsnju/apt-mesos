@@ -1,0 +1,17 @@
+{
+    "context_dir": "/Users/jeff/workspace/mesos/cluster/docker_context",
+    "name": "test",
+    "tasks": [
+      {
+        "cpu": "0.5",
+        "mem": "16",
+        "cmd": "ls /2",
+        "scale": 2,
+      },
+      {
+        "cpu": "0.5",
+        "mem": "16",
+        "cmd": "ls"
+      }
+    ]
+}

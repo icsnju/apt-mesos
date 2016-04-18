@@ -163,6 +163,10 @@ func (core *Core) getTaskDirectory(slavePID, executorID string) (string, error) 
 
 func (core *Core) updateTaskByDockerInfo(task *registry.Task, dockerInspectOutput []byte) {
 	//	glog.Infof("Docker Inspect: %s", dockerInspectOutput)
+	if len(dockerInspectOutput) == 0 {
+		return
+	}
+
 	var dockerTasks []*registry.DockerTask
 	err := json.Unmarshal(dockerInspectOutput, &dockerTasks)
 	if err != nil {

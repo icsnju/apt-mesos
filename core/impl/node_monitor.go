@@ -30,6 +30,7 @@ func (core *Core) updateNodesByOffer(offers []*mesosproto.Offer) {
 				Hostname:       offer.GetHostname(),
 				LastUpdateTime: time.Now().Unix(),
 				Resources:      resources,
+				Attributes:     offer.GetAttributes(),
 			}
 			core.RegisterNode(slaveID, node)
 		}
@@ -105,8 +106,11 @@ func (core *Core) updateNodesByCAdvisor() {
 			client, err := client.NewClient("http://" + node.Host + ":" + core.GetAgentLisenPort())
 			if err != nil {
 				log.Errorf("Cannot connect to cadvisor agent: %v", err)
+				node.DockerDaemonHealth = registry.DockerDaemonDown
 				continue
 			}
+
+			node.DockerDaemonHealth = registry.DockerDaemonUp
 			// Fetch software versions and hardware information
 			// One node fetches just one time
 			if !node.MachineInfoFetched {

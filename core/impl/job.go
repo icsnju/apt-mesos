@@ -3,6 +3,7 @@ package impl
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -11,12 +12,109 @@ import (
 	"github.com/icsnju/apt-mesos/docker"
 	"github.com/icsnju/apt-mesos/mesosproto"
 	"github.com/icsnju/apt-mesos/registry"
+	"github.com/icsnju/apt-mesos/utils"
 )
 
 var (
 	BUILD_CPU float64 = 0.5
 	BUILD_MEM float64 = 128
 )
+
+func (core *Core) StartJob(job *registry.Job) error {
+	log.Infof("Starting job: %v", job.ID)
+	if job.Image == "" && job.ContextDir == "" {
+		return errors.New("Start job error: image, context_dir cannot be nil at the same time")
+	}
+
+	if job.ContextDir != "" {
+		core.BuildImage(job, len(job.Tasks))
+	}
+
+	// TODO split input
+	core.RunTask(job)
+
+	return nil
+}
+
+func (core *Core) BuildImage(job *registry.Job, size int) error {
+	// Build Images before run test task
+	// TaskID: build-{JobID}-{randID}-{NumberOfScale}
+	log.Infof("Create task for job(%v) to build image", job.ID)
+	job.Image = "image-" + job.ID
+	for index := 1; index <= size; index++ {
+		task := &registry.Task{
+			Cpus:       BUILD_CPU,
+			Mem:        BUILD_MEM,
+			ID:         "build-" + job.ID + "-" + strconv.Itoa(index),
+			Name:       job.Name + " [BUILD IMAGE]",
+			Type:       registry.TaskTypeBuild,
+			CreateTime: time.Now().UnixNano(),
+			JobID:      job.ID,
+			State:      "TASK_WAITING",
+			SLA:        registry.SLAOnePerNode,
+		}
+
+		err := core.AddTask(task.ID, task)
+		if err != nil {
+			log.Errorf("Error when add %d build image task: %v", index, err)
+			continue
+		}
+	}
+	return nil
+}
+
+func (core *Core) RunTask(job *registry.Job) {
+	// Run test task of specified job
+	// TaskID: test-{JobID}-{randID}-{scaleNumber}
+	for _, task := range job.Tasks {
+		randID, err := utils.Encode(6)
+		if err != nil {
+			log.Errorf("Error when generate id to task %d of job %v", task.ID, job.ID)
+			continue
+		}
+
+		if task.Scale <= 0 {
+			task.Scale = 1
+		}
+
+		for index := 1; index <= task.Scale; index++ {
+			taskInstance := &registry.Task{
+				JobID:       job.ID,
+				ID:          "task-" + job.ID + "-" + randID + "-" + strconv.Itoa(index),
+				Name:        job.Name + " [RUN TASK]",
+				DockerImage: job.Image,
+				Cpus:        task.Cpus,
+				Mem:         task.Mem,
+				Disk:        task.Disk,
+				Ports:       task.Ports,
+				Command:     task.Command,
+				Resources:   task.Resources,
+				Attributes:  task.Attributes,
+				CreateTime:  time.Now().UnixNano(),
+				Type:        registry.TaskTypeTest,
+				State:       "TASK_WAITING",
+			}
+
+			// if task was build from dockerfile
+			// add attribute to task
+			if job.ContextDir != "" {
+				taskInstance.Attributes = append(task.Attributes, &mesosproto.Attribute{
+					Name: proto.String("Image"),
+					Text: &mesosproto.Value_Text{
+						Value: proto.String(job.Image),
+					},
+				})
+			}
+
+			err = core.AddTask(taskInstance.ID, taskInstance)
+			if err != nil {
+				task.State = "TASK_FAILED"
+				log.Errorf("Error when running task %v: %v", task.ID, err)
+				continue
+			}
+		}
+	}
+}
 
 // CreateSingleTaskInfo build single taskInfo for task
 func (core *Core) CreateSingleTaskInfo(offer *mesosproto.Offer, resources []*mesosproto.Resource, task *registry.Task) (*mesosproto.TaskInfo, error) {
@@ -109,34 +207,6 @@ func (core *Core) CreateSingleTaskInfo(offer *mesosproto.Offer, resources []*mes
 	return taskInfo, nil
 }
 
-func (core *Core) StartJob(job *registry.Job) error {
-	log.Infof("Starting job: %v", job.ID)
-	err := core.CreateBuildImageTask(job)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (core *Core) CreateBuildImageTask(job *registry.Job) error {
-	log.Infof("Create task for job(%v) to build image", job.ID)
-	task := &registry.Task{
-		Cpus:        BUILD_CPU,
-		Mem:         BUILD_MEM,
-		ID:          "build-" + job.ID,
-		Name:        "build image to job " + job.Name,
-		Type:        registry.TaskType_Build,
-		CreatedTime: time.Now().UnixNano(),
-		JobID:       job.ID,
-		State:       "TASK_WAITING",
-	}
-	err := core.AddTask(task.ID, task)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 func (core *Core) CreateBuildImageTaskInfo(offer *mesosproto.Offer, resources []*mesosproto.Resource, task *registry.Task) (*mesosproto.TaskInfo, error) {
 	log.Debugf("Build image taskInfo of task(%v)", task.ID)
 	job, err := core.GetJob(task.JobID)
@@ -144,16 +214,18 @@ func (core *Core) CreateBuildImageTaskInfo(offer *mesosproto.Offer, resources []
 		return nil, err
 	}
 
+	if !job.HasContextDir() {
+		return nil, errors.New("Context directory needed.")
+	}
+
 	if exists := job.DockerfileExists(); !exists {
 		return nil, errors.New("Cannot found Dockerfile in context directory.")
 	}
 
 	job.Dockerfile = docker.NewDockerfile("dockerfile-"+job.ID, job.ContextDir)
-	if job.Dockerfile.HasLocalSources() {
-		err := job.Dockerfile.BuildContext()
-		if err != nil {
-			return nil, err
-		}
+	err = job.Dockerfile.BuildContext()
+	if err != nil {
+		return nil, err
 	}
 
 	contextServePath := "http://" + core.GetAddr() + "/context/" + job.Dockerfile.ID + ".tar"
@@ -174,12 +246,12 @@ func (core *Core) CreateBuildImageTaskInfo(offer *mesosproto.Offer, resources []
 		Name: proto.String("Build Image (APT-MESOS)"),
 		Command: &mesosproto.CommandInfo{
 			Uris:  executorUris,
-			Value: proto.String("ls"),
+			Value: proto.String("./image_builder"),
 		},
 	}
 	return &mesosproto.TaskInfo{
 		Executor:  executorInfo,
-		Name:      proto.String(fmt.Sprintf("build image for job: %s", task.JobID)),
+		Name:      proto.String("image-" + task.JobID),
 		Resources: resources,
 		SlaveId:   offer.SlaveId,
 		TaskId: &mesosproto.TaskID{

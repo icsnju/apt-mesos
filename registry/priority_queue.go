@@ -15,7 +15,7 @@ func (queue FCFSQueue) Swap(i, j int) {
 }
 
 func (queue FCFSQueue) Less(i, j int) bool {
-	return queue[i].CreatedTime < queue[j].CreatedTime
+	return queue[i].CreateTime < queue[j].CreateTime
 }
 
 // NewFCFSQueue return a task queue in order of create time

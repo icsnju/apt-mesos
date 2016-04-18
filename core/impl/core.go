@@ -28,6 +28,7 @@ type Core struct {
 	tasks         registry.Registry
 	nodes         registry.Registry
 	jobs          registry.Registry
+	offers        []*mesosproto.Offer
 	scheduler     scheduler.FCFSScheduler
 
 	Endpoints map[string]map[string]func(w http.ResponseWriter, r *http.Request) error
@@ -114,22 +115,20 @@ func (core *Core) schedule() {
 	for {
 		tasks := core.GetUnScheduledTask()
 		if len(tasks) > 0 {
-			offers, err := core.RequestOffers()
-			if err != nil {
-				log.Errorf("Request offers error: %v", err)
-				continue
-			}
-
-			for _, offer := range offers {
+			for _, offer := range core.offers {
 				log.Debug(offer)
 			}
 
-			task, offer, success := core.scheduler.Schedule(tasks, offers)
+			task, offer, success := core.scheduler.Schedule(tasks, core.offers)
 
 			// if remained resource can run a task
 			if success {
 				log.Infof("Schedule task result: run task(%v) on %v", task.ID, offer.GetHostname())
-				core.LaunchTask(task, offer, offers)
+				err := core.LaunchTask(task, offer, core.offers)
+				if err != nil {
+					log.Error(err)
+					task.State = "TASK_FAILED"
+				}
 				core.updateNodeByTask(offer.GetSlaveId().GetValue(), task)
 			} else {
 				log.Infof("No enough resources remained, wait for other tasks finish")
@@ -237,9 +236,9 @@ func (core *Core) LaunchTask(task *registry.Task, offer *mesosproto.Offer, offer
 	log.Infof("Launch task %v, on node %v", task.ID, offer.GetHostname())
 	taskInfo := &mesosproto.TaskInfo{}
 	var err error
-	if task.Type == registry.TaskType_Test {
+	if task.Type == registry.TaskTypeTest {
 		taskInfo, err = core.CreateSingleTaskInfo(offer, resources, task)
-	} else if task.Type == registry.TaskType_Build {
+	} else if task.Type == registry.TaskTypeBuild {
 		taskInfo, err = core.CreateBuildImageTaskInfo(offer, resources, task)
 	} else {
 		return errors.New("Unknown task type received.")
@@ -254,12 +253,8 @@ func (core *Core) LaunchTask(task *registry.Task, offer *mesosproto.Offer, offer
 			if err := core.AcceptOffer(value, resources, taskInfo); err != nil {
 				return err
 			}
+			core.deleteOffer(value)
 			task.State = "TASK_STAGING"
-		} else {
-			log.Debugf("Decline offer for node: %v", value.GetHostname())
-			if err := core.DeclineOffer(value, task); err != nil {
-				return err
-			}
 		}
 	}
 	return nil

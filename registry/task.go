@@ -2,6 +2,7 @@ package registry
 
 import (
 	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/icsnju/apt-mesos/mesosproto"
@@ -23,13 +24,14 @@ const (
 
 // Task struct
 type Task struct {
-	ID        string                 `json:"id"`
-	Name      string                 `json:"name"`
-	Cpus      float64                `json:"cpus,string"`
-	Mem       float64                `json:"mem,string"`
-	Disk      float64                `json:"disk,string"`
-	Resources []*mesosproto.Resource `json:"resources,omitempty"`
-	SLA       string                 `json:"sla"`
+	ID         string                  `json:"id"`
+	Name       string                  `json:"name"`
+	Cpus       float64                 `json:"cpus,string"`
+	Mem        float64                 `json:"mem,string"`
+	Disk       float64                 `json:"disk,string"`
+	Resources  []*mesosproto.Resource  `json:"resources,omitempty"`
+	Attributes []*mesosproto.Attribute `json:attributes,omitempty`
+	SLA        string                  `json:"sla"`
 
 	// Monitoring
 	State          string   `json:"state"`
@@ -59,11 +61,12 @@ type Task struct {
 	SlavePID      string `json:"slave_pid"`
 	ExecutorID    string `json:"executor_id"`
 	Directory     string `json:"directory"`
-	CreatedTime   int64  `json:"create_time"`
+	CreateTime    int64  `json:"create_time"`
 
 	TaskInfo *mesosproto.TaskInfo
 	Type     TaskType `enum=TaskType,json:"type,omitempty"`
 	JobID    string   `json:"job_id"`
+	Scale    int      `json:"scale"`
 }
 
 // DockerTask is docker information struct
@@ -92,6 +95,17 @@ type Usage struct {
 type TaskType int32
 
 const (
-	TaskType_Test  TaskType = 0
-	TaskType_Build TaskType = 1
+	TaskTypeTest  TaskType = 0
+	TaskTypeBuild TaskType = 1
 )
+
+func (task *Task) Parse() string {
+	if task.JobID == "" {
+		return task.ID
+	}
+	index := strings.LastIndex(task.ID, "-")
+	if index < 0 {
+		return task.ID
+	}
+	return task.ID[0:index]
+}

@@ -4,7 +4,9 @@ import (
 	"fmt"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/gogo/protobuf/proto"
 	"github.com/icsnju/apt-mesos/mesosproto"
+	"github.com/icsnju/apt-mesos/registry"
 )
 
 // Events the channel array
@@ -25,8 +27,38 @@ func (core *Core) AddEvent(eventType mesosproto.Event_Type, event *mesosproto.Ev
 	log.WithFields(log.Fields{"type": eventType}).Debug("Received event from master.")
 	if eventType == mesosproto.Event_OFFERS {
 		log.Debugf("Received %d offer(s).", len(event.Offers.Offers))
+
+		// update node
 		core.updateNodesByOffer(event.Offers.Offers)
 		core.updateNodesByMetrics()
+
+		// update core.Offers
+		offers := core.handleOffers(event.Offers.Offers)
+		for _, offer := range offers {
+			core.offers = append(core.offers, offer)
+		}
+
+	} else if eventType == mesosproto.Event_UPDATE {
+		if event.GetUpdate().GetStatus().GetState().String() == "TASK_FINISHED" {
+			task, err := core.GetTask(event.GetUpdate().GetStatus().GetTaskId().GetValue())
+			log.Debug("Task %v finished", task.ID)
+
+			// if task has jobID and is a build task
+			// update it's node with new attributes images
+			if err == nil && task.JobID != "" && task.Type == registry.TaskTypeBuild {
+				job, err1 := core.GetJob(task.JobID)
+				node, err2 := core.GetNode(event.GetUpdate().GetStatus().GetSlaveId().GetValue())
+				if err1 == nil && err2 == nil {
+					image := job.Image
+					node.CustomAttributes = append(node.CustomAttributes, &mesosproto.Attribute{
+						Name: proto.String("Image"),
+						Text: &mesosproto.Value_Text{
+							Value: proto.String(image),
+						},
+					})
+				}
+			}
+		}
 	}
 
 	if c, ok := core.events[eventType]; ok {
