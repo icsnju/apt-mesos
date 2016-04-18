@@ -25,8 +25,17 @@ func (core *Core) AddEvent(eventType mesosproto.Event_Type, event *mesosproto.Ev
 	log.WithFields(log.Fields{"type": eventType}).Debug("Received event from master.")
 	if eventType == mesosproto.Event_OFFERS {
 		log.Debugf("Received %d offer(s).", len(event.Offers.Offers))
+
+		// update node
 		core.updateNodesByOffer(event.Offers.Offers)
 		core.updateNodesByMetrics()
+
+		// update core.Offers
+		offers := core.handleOffers(event.Offers.Offers)
+		for _, offer := range offers {
+			core.offers = append(core.offers, offer)
+		}
+
 	}
 
 	if c, ok := core.events[eventType]; ok {

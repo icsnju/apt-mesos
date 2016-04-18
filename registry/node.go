@@ -28,3 +28,17 @@ type Node struct {
 	Tasks []*Task `json:"tasks"`
 	PID   string
 }
+
+func (node *Node) GetTasks() []*Task {
+	return node.Tasks
+}
+
+func (node *Node) GetSLATasks() []*Task {
+	var result []*Task
+	for _, task := range node.Tasks {
+		if task.SLA != "" {
+			result = append(result, task)
+		}
+	}
+	return result
+}

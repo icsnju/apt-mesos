@@ -21,6 +21,11 @@ func (scheduler *FCFSScheduler) Schedule(tasks []*registry.Task, offers []*mesos
 	queue := registry.NewFCFSQueue(tasks)
 	for _, task := range queue {
 		for _, offer := range offers {
+			log.Debug(task.ID)
+			log.Debug(offer.GetHostname())
+			log.Debug(offer.GetAttributes())
+			log.Debug(resource.ResourcesMatch(task, offer))
+			log.Debug(resource.ConstraintsMatch(task, offer))
 			if resource.ResourcesMatch(task, offer) && resource.ConstraintsMatch(task, offer) {
 				return task, offer, true
 			}

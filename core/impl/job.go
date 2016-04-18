@@ -40,15 +40,10 @@ func (core *Core) BuildImage(job *registry.Job, size int) error {
 	// TaskID: build-{JobID}-{randID}#{NumberOfScale}
 	log.Infof("Create task for job(%v) to build image", job.ID)
 	for index := 1; index <= size; index++ {
-		randID, err := utils.Encode(6)
-		if err != nil {
-			log.Errorf("Error when generate id to build-task %d of job %v", index, job.ID)
-			continue
-		}
 		task := &registry.Task{
 			Cpus:       BUILD_CPU,
 			Mem:        BUILD_MEM,
-			ID:         "build-" + job.ID + "-" + randID + "#" + strconv.Itoa(index),
+			ID:         "build-" + job.ID + "#" + strconv.Itoa(index),
 			Name:       job.Name + " [BUILD IMAGE]",
 			Type:       registry.TaskTypeBuild,
 			CreateTime: time.Now().UnixNano(),
@@ -56,7 +51,7 @@ func (core *Core) BuildImage(job *registry.Job, size int) error {
 			State:      "TASK_WAITING",
 			SLA:        registry.SLAOnePerNode,
 		}
-		err = core.AddTask(task.ID, task)
+		err := core.AddTask(task.ID, task)
 		if err != nil {
 			log.Errorf("Error when add %d build image task: %v", index, err)
 			continue
@@ -83,7 +78,6 @@ func (core *Core) RunTask(job *registry.Job) {
 		task.Type = registry.TaskTypeTest
 		task.State = "TASK_WAITING"
 
-		log.Debug(task.ID)
 		// err := core.AddTask(task.ID, task)
 		// if err != nil {
 		// 	task.State = "TASK_FAILED"
