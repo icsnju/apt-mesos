@@ -14,10 +14,6 @@ var (
 
 func (dockerfile *Dockerfile) BuildContext() error {
 
-	if !dockerfile.HasLocalSources() {
-		return nil
-	}
-
 	// Copy all context to a temp directory
 	tempContextDir := path.Join(TEMPDIR, "context-"+dockerfile.ID)
 	log.Debugf("Build docker context in path: %v", tempContextDir)

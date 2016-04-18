@@ -6,13 +6,9 @@ import (
 )
 
 // ConstraintsMatch check if a offer fit task's constaints
-// TODO implementation
 func ConstraintsMatch(task *registry.Task, offer *mesosproto.Offer) bool {
-	return SlAMatch(task, offer)
-}
-
-func SlAMatch(task *registry.Task, offer *mesosproto.Offer) bool {
 	for _, attribute := range offer.GetAttributes() {
+		// SLA Match
 		if attribute.GetName() == "SLATasks" {
 			items := attribute.GetSet().GetItem()
 			for _, item := range items {
@@ -20,7 +16,6 @@ func SlAMatch(task *registry.Task, offer *mesosproto.Offer) bool {
 					return false
 				}
 			}
-			return true
 		}
 	}
 	return true

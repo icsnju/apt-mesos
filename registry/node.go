@@ -20,6 +20,7 @@ type Node struct {
 	KernelVersion      string `json:"kernel_version"`
 	ContainerOsVersion string `json:"container_os_version"`
 	DockerVersion      string `json:"docker_version"`
+	DockerDaemonHealth string `json:"docker_daemon_health"`
 
 	CPUUsage    float64  `json:"cpu_usage"`
 	MemoryUsage uint64   `json:"memory_usage"`
@@ -28,6 +29,11 @@ type Node struct {
 	Tasks []*Task `json:"tasks"`
 	PID   string
 }
+
+var (
+	DockerDaemonUp   = "up"
+	DockerDaemonDown = "down"
+)
 
 func (node *Node) GetTasks() []*Task {
 	return node.Tasks

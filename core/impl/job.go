@@ -37,13 +37,13 @@ func (core *Core) StartJob(job *registry.Job) error {
 
 func (core *Core) BuildImage(job *registry.Job, size int) error {
 	// Build Images before run test task
-	// TaskID: build-{JobID}-{randID}#{NumberOfScale}
+	// TaskID: build-{JobID}-{randID}-{NumberOfScale}
 	log.Infof("Create task for job(%v) to build image", job.ID)
 	for index := 1; index <= size; index++ {
 		task := &registry.Task{
 			Cpus:       BUILD_CPU,
 			Mem:        BUILD_MEM,
-			ID:         "build-" + job.ID + "#" + strconv.Itoa(index),
+			ID:         "build-" + job.ID + "-" + strconv.Itoa(index),
 			Name:       job.Name + " [BUILD IMAGE]",
 			Type:       registry.TaskTypeBuild,
 			CreateTime: time.Now().UnixNano(),
@@ -62,7 +62,7 @@ func (core *Core) BuildImage(job *registry.Job, size int) error {
 
 func (core *Core) RunTask(job *registry.Job) {
 	// Run test task of specified job
-	// TaskID: test-{JobID}-{randID}#{scaleNumber}
+	// TaskID: test-{JobID}-{randID}-{scaleNumber}
 	for index, task := range job.Tasks {
 		randID, err := utils.Encode(6)
 		if err != nil {
@@ -71,7 +71,7 @@ func (core *Core) RunTask(job *registry.Job) {
 		}
 
 		task.JobID = job.ID
-		task.ID = "test-" + job.ID + "-" + randID + "#" + strconv.Itoa(index)
+		task.ID = "test-" + job.ID + "-" + randID + "-" + strconv.Itoa(index)
 		task.Name = job.Name + " [RUN TASK]"
 		task.DockerImage = job.Image
 		task.CreateTime = time.Now().UnixNano()
@@ -185,16 +185,18 @@ func (core *Core) CreateBuildImageTaskInfo(offer *mesosproto.Offer, resources []
 		return nil, err
 	}
 
+	if !job.HasContextDir() {
+		return nil, errors.New("Context directory needed.")
+	}
+
 	if exists := job.DockerfileExists(); !exists {
 		return nil, errors.New("Cannot found Dockerfile in context directory.")
 	}
 
 	job.Dockerfile = docker.NewDockerfile("dockerfile-"+job.ID, job.ContextDir)
-	if job.Dockerfile.HasLocalSources() {
-		err := job.Dockerfile.BuildContext()
-		if err != nil {
-			return nil, err
-		}
+	err = job.Dockerfile.BuildContext()
+	if err != nil {
+		return nil, err
 	}
 
 	contextServePath := "http://" + core.GetAddr() + "/context/" + job.Dockerfile.ID + ".tar"

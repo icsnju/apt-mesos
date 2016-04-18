@@ -102,7 +102,7 @@ func (task *Task) Parse() string {
 	if task.JobID == "" {
 		return task.ID
 	}
-	index := strings.LastIndex(task.ID, "#")
+	index := strings.LastIndex(task.ID, "-")
 	if index < 0 {
 		return task.ID
 	}

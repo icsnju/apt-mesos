@@ -31,3 +31,7 @@ func (job *Job) DockerfileExists() bool {
 	}
 	return false
 }
+
+func (job *Job) HasContextDir() bool {
+	return job.ContextDir != ""
+}
