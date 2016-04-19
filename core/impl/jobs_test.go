@@ -13,6 +13,13 @@ var (
 		ID:   "1",
 		Name: "testJob",
 	}
+	testJob2 = &registry.Job{
+		ID:   "2",
+		Name: "testJob2",
+	}
+	task1 = &registry.Task{
+		ID: "1",
+	}
 )
 
 func TestCreateJob(t *testing.T) {
@@ -62,6 +69,21 @@ func TestDeleteJob(t *testing.T) {
 		err := c.DeleteJob("1")
 		So(err, ShouldBeNil)
 		jobs := c.GetAllJobs()
+		So(len(jobs), ShouldEqual, 0)
+	})
+}
+
+func TestGetNotFinishedJobs(t *testing.T) {
+	Convey("get not finished jobs", t, func() {
+		c.AddJob(testJob.ID, testJob)
+		c.AddJob(testJob2.ID, testJob2)
+		testJob.PushTask(task1)
+		jobs := c.GetNotFinishedJobs()
+		So(testJob.IsFinished(), ShouldBeFalse)
+		So(len(jobs), ShouldEqual, 1)
+
+		testJob.PopFirstTask()
+		jobs = c.GetNotFinishedJobs()
 		So(len(jobs), ShouldEqual, 0)
 	})
 }

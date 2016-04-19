@@ -14,6 +14,7 @@ func (core *Core) AddJob(id string, job *registry.Job) error {
 	if err := core.jobs.Add(id, job); err != nil {
 		return err
 	}
+	core.scheduler.AddJob(job)
 	return nil
 }
 
@@ -43,4 +44,14 @@ func (core *Core) DeleteJob(id string) error {
 
 func (core *Core) UpdateJob(id string, job *registry.Job) error {
 	return core.jobs.Update(id, job)
+}
+
+func (core *Core) GetNotFinishedJobs() []*registry.Job {
+	var result []*registry.Job
+	for _, job := range core.GetAllJobs() {
+		if !job.IsFinished() {
+			result = append(result, job)
+		}
+	}
+	return result
 }

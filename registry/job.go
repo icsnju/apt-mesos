@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"container/list"
 	"path"
 
 	"github.com/icsnju/apt-mesos/docker"
@@ -15,6 +16,7 @@ type Job struct {
 	ContextDir string             `json:"context_dir"`
 	CreateTime int64              `json:"create_time"`
 	Tasks      []*Task            `json:"tasks"`
+	TaskQueue  list.List          `json:"task_queue"`
 	Splitter   string             `json:"splitter"`
 	Input      string             `json:"input"`
 
@@ -34,4 +36,32 @@ func (job *Job) DockerfileExists() bool {
 
 func (job *Job) HasContextDir() bool {
 	return job.ContextDir != ""
+}
+
+func (job *Job) FirstTask() *Task {
+	return job.TaskQueue.Front().Value.(*Task)
+}
+
+func (job *Job) LastTask() *Task {
+	return job.TaskQueue.Back().Value.(*Task)
+}
+
+func (job *Job) PushTask(task *Task) {
+	job.TaskQueue.PushBack(task)
+}
+
+func (job *Job) PopFirstTask() *Task {
+	task := job.TaskQueue.Front()
+	job.TaskQueue.Remove(task)
+	return task.Value.(*Task)
+}
+
+func (job *Job) PopLastTask() *Task {
+	task := job.TaskQueue.Back()
+	job.TaskQueue.Remove(task)
+	return task.Value.(*Task)
+}
+
+func (job *Job) IsFinished() bool {
+	return job.TaskQueue.Len() == 0
 }

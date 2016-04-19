@@ -1,23 +1,24 @@
-package registry
+package structure
 
 import (
 	"testing"
 
+	"github.com/icsnju/apt-mesos/registry"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestFCFSQueue(t *testing.T) {
 	Convey("fcfs queue sort", t, func() {
-		var arr []*Task
-		arr = append(arr, &Task{
+		var arr []*registry.Job
+		arr = append(arr, &registry.Job{
 			ID:         "1",
 			CreateTime: 65,
 		})
-		arr = append(arr, &Task{
+		arr = append(arr, &registry.Job{
 			ID:         "2",
 			CreateTime: 75,
 		})
-		arr = append(arr, &Task{
+		arr = append(arr, &registry.Job{
 			ID:         "3",
 			CreateTime: 45,
 		})

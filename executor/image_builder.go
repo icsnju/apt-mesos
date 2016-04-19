@@ -43,7 +43,7 @@ func (builder *ImageBuilder) Disconnected(executor.ExecutorDriver) {
 
 // LaunchTask called when executor launch tasks
 func (builder *ImageBuilder) LaunchTask(driver executor.ExecutorDriver, taskInfo *mesosproto.TaskInfo) {
-	fmt.Printf("Launching task %v with ID %v\n", taskInfo.GetName(), taskInfo.GetTaskId())
+	fmt.Printf("Launching task %v with ID %v\n", taskInfo.GetName(), taskInfo.GetTaskId().GetValue())
 
 	status := &mesosproto.TaskStatus{
 		TaskId: taskInfo.GetTaskId(),
@@ -71,7 +71,7 @@ func (builder *ImageBuilder) LaunchTask(driver executor.ExecutorDriver, taskInfo
 	// Build image with context
 	var buf bytes.Buffer
 	opts := docker.BuildImageOptions{
-		Name:           taskInfo.GetTaskId(),
+		Name:           taskInfo.GetTaskId().GetValue(),
 		ContextDir:     contextDir,
 		SuppressOutput: false,
 		OutputStream:   &buf,

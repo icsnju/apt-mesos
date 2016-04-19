@@ -1,0 +1,17 @@
+{
+    "image": "busybox",
+    "name": "busybox",
+    "tasks": [
+      {
+        "cpus": "0.5",
+        "mem": "16",
+        "cmd": "ls",
+        "scale": 10
+      },
+      {
+        "cpus": "0.5",
+        "mem": "16",
+        "cmd": "ls /usr"
+      }
+    ]
+}

@@ -1,0 +1,40 @@
+{
+    "name": "cadvisor",
+    "image": "google/cadvisor:latest",
+    "tasks": [
+      {
+        "cpus": "0.5",
+        "mem": "64",
+        "cmd": "/usr/bin/cadvisor -l",
+        "scale": 5,
+        "volumes": [
+            {
+                "host_path":"/",
+                "container_path":"/rootfs",
+                "mode":"ro"
+            },
+            {
+                "host_path":"/var/run",
+                "container_path":"/var/run",
+                "mode":"rw"
+            },
+            {
+                "host_path":"/sys",
+                "container_path":"/sys",
+                "mode":"ro"
+            },
+            {
+                "host_path":"/var/lib/docker",
+                "container_path":"/var/lib/docker/",
+                "mode":"ro"
+            }
+        ],
+        "port_mappings": [
+            {
+                "host_port":"31502",
+                "container_port":"8080"
+            }
+        ]
+      }
+    ]
+}

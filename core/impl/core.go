@@ -11,7 +11,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/icsnju/apt-mesos/mesosproto"
 	"github.com/icsnju/apt-mesos/registry"
-	scheduler "github.com/icsnju/apt-mesos/scheduler/impl"
+	scheduler "github.com/icsnju/apt-mesos/scheduler"
 	"github.com/icsnju/apt-mesos/scheduler/impl/resource"
 
 	log "github.com/Sirupsen/logrus"
@@ -29,7 +29,7 @@ type Core struct {
 	nodes         registry.Registry
 	jobs          registry.Registry
 	offers        []*mesosproto.Offer
-	scheduler     scheduler.FCFSScheduler
+	scheduler     scheduler.Scheduler
 
 	Endpoints map[string]map[string]func(w http.ResponseWriter, r *http.Request) error
 }
@@ -43,7 +43,7 @@ type Core struct {
 //  events:	event channel
 //  nodes: node registry
 //  tasks: task registry
-func NewCore(addr string, master string) *Core {
+func NewCore(addr string, master string, scheduler scheduler.Scheduler) *Core {
 	core := &Core{
 		addr:          addr,
 		master:        master,
@@ -52,7 +52,7 @@ func NewCore(addr string, master string) *Core {
 		tasks:         *registry.NewRegistry(),
 		nodes:         *registry.NewRegistry(),
 		jobs:          *registry.NewRegistry(),
-		scheduler:     *scheduler.NewScheduler(),
+		scheduler:     scheduler,
 		Endpoints:     nil,
 	}
 	return core
@@ -113,13 +113,12 @@ func (core *Core) Run() error {
 
 func (core *Core) schedule() {
 	for {
-		tasks := core.GetUnScheduledTask()
-		if len(tasks) > 0 {
-			for _, offer := range core.offers {
-				log.Debug(offer)
+		if core.scheduler.CheckFinished(); core.scheduler.HasJob() {
+			for index, offer := range core.offers {
+				log.Debugf("Current offers[%d]: %v", index, offer)
 			}
 
-			task, offer, success := core.scheduler.Schedule(tasks, core.offers)
+			task, offer, success := core.scheduler.Schedule(core.offers)
 
 			// if remained resource can run a task
 			if success {

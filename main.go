@@ -6,6 +6,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	comm "github.com/icsnju/apt-mesos/communication"
 	core "github.com/icsnju/apt-mesos/core/impl"
+	scheduler "github.com/icsnju/apt-mesos/scheduler/impl"
 )
 
 var (
@@ -26,8 +27,11 @@ func main() {
 		log.SetLevel(log.DebugLevel)
 	}
 
+	// create a new scheduler
+	scheduler := scheduler.NewFCFSScheduler()
+
 	// start a new core
-	core := core.NewCore(addr, master)
+	core := core.NewCore(addr, master, scheduler)
 
 	// Start HTTP server
 	comm.ListenAndServe(addr, core)

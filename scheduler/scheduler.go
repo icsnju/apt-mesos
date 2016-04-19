@@ -7,5 +7,8 @@ import (
 
 // Scheduler interface to schedule task to run
 type Scheduler interface {
-	Schedule(tasks []*registry.Task, offers []*mesosproto.Offer) (*mesosproto.Offer, *registry.Task, error)
+	Schedule(offers []*mesosproto.Offer) (*registry.Task, *mesosproto.Offer, bool)
+	AddJob(job *registry.Job)
+	HasJob() bool
+	CheckFinished()
 }
