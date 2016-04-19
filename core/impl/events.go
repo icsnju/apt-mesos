@@ -41,7 +41,7 @@ func (core *Core) AddEvent(eventType mesosproto.Event_Type, event *mesosproto.Ev
 	} else if eventType == mesosproto.Event_UPDATE {
 		if event.GetUpdate().GetStatus().GetState().String() == "TASK_FINISHED" {
 			task, err := core.GetTask(event.GetUpdate().GetStatus().GetTaskId().GetValue())
-			log.Debug("Task %v finished", task.ID)
+			log.Debugf("Task %v finished", task.ID)
 
 			// if task has jobID and is a build task
 			// update it's node with new attributes images

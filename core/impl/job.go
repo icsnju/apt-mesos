@@ -46,7 +46,7 @@ func (core *Core) BuildImage(job *registry.Job, size int) error {
 			Cpus:       BUILD_CPU,
 			Mem:        BUILD_MEM,
 			ID:         "build-" + job.ID + "-" + strconv.Itoa(index),
-			Name:       job.Name + " [BUILD IMAGE]",
+			Name:       job.Name,
 			Type:       registry.TaskTypeBuild,
 			CreateTime: time.Now().UnixNano(),
 			JobID:      job.ID,
@@ -85,7 +85,7 @@ func (core *Core) RunTask(job *registry.Job) {
 			taskInstance := &registry.Task{
 				JobID:       job.ID,
 				ID:          "task-" + job.ID + "-" + randID + "-" + strconv.Itoa(index),
-				Name:        job.Name + " [RUN TASK]",
+				Name:        job.Name,
 				DockerImage: job.Image,
 				Cpus:        task.Cpus,
 				Mem:         task.Mem,

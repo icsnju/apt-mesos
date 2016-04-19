@@ -46,6 +46,24 @@ func (core *Core) UpdateJob(id string, job *registry.Job) error {
 	return core.jobs.Update(id, job)
 }
 
+func (core *Core) updateJobByTask(id string, task *registry.Task) {
+	if job, err := core.GetJob(id); err == nil {
+		for _, resource := range task.Resources {
+			// Only support scalar resource now
+			if resource.GetType().String() == "SCALAR" {
+				_, ok := job.UsedResources[resource.GetName()]
+				if !ok {
+					job.UsedResources[resource.GetName()] = resource
+
+				} else {
+					newScalar := job.UsedResources[resource.GetName()].GetScalar().GetValue() + resource.GetScalar().GetValue()
+					job.UsedResources[resource.GetName()].Scalar.Value = &newScalar
+				}
+			}
+		}
+	}
+}
+
 func (core *Core) GetNotFinishedJobs() []*registry.Job {
 	var result []*registry.Job
 	for _, job := range core.GetAllJobs() {

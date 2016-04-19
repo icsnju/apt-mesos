@@ -119,7 +119,6 @@ func (core *Core) schedule() {
 			}
 
 			task, offer, success := core.scheduler.Schedule(core.offers)
-
 			// if remained resource can run a task
 			if success {
 				log.Infof("Schedule task result: run task(%v) on %v", task.ID, offer.GetHostname())
@@ -129,6 +128,7 @@ func (core *Core) schedule() {
 					task.State = "TASK_FAILED"
 				}
 				core.updateNodeByTask(offer.GetSlaveId().GetValue(), task)
+				core.updateJobByTask(task.JobID, task)
 			} else {
 				log.Infof("No enough resources remained, wait for other tasks finish")
 				time.Sleep(3 * time.Second)

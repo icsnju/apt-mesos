@@ -5,6 +5,7 @@ import (
 	"path"
 
 	"github.com/icsnju/apt-mesos/docker"
+	"github.com/icsnju/apt-mesos/mesosproto"
 	"github.com/icsnju/apt-mesos/utils"
 )
 
@@ -20,7 +21,8 @@ type Job struct {
 	Splitter   string             `json:"splitter"`
 	Input      string             `json:"input"`
 
-	SLAOffers map[string]string
+	UsedResources map[string]*mesosproto.Resource `json:"used_resource"`
+	SLAOffers     map[string]string
 }
 
 func (job *Job) DockerfileExists() bool {

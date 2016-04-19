@@ -8,6 +8,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/go-martini/martini"
 	"github.com/icsnju/apt-mesos/core"
+	"github.com/icsnju/apt-mesos/mesosproto"
 	"github.com/icsnju/apt-mesos/registry"
 	"github.com/icsnju/apt-mesos/utils"
 )
@@ -167,6 +168,7 @@ func (h *Handler) CreateJob() martini.Handler {
 		job.ID = randID
 		job.CreateTime = time.Now().UnixNano()
 		job.SLAOffers = make(map[string]string)
+		job.UsedResources = make(map[string]*mesosproto.Resource)
 
 		log.WithField("Job", job).Infof("Receive job: %v", job.ID)
 		err = h.core.AddJob(job.ID, job)

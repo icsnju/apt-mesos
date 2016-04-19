@@ -12,3 +12,8 @@ type Scheduler interface {
 	HasJob() bool
 	CheckFinished()
 }
+
+const (
+	FCFS = "fcfs"
+	DRF  = "drf"
+)
