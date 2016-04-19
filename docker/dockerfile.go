@@ -67,7 +67,7 @@ func (d *Dockerfile) parse(path string) {
 
 func (d *Dockerfile) addInstruction(instruction string) {
 	parts := strings.Split(instruction, " ")
-	command := strings.ToUpper(parts[0])
+	command := parts[0]
 	arguments := parts[1:]
 
 	if command == "FROM" && len(d.Registry) > 0 {

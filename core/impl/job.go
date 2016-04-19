@@ -46,7 +46,7 @@ func (core *Core) BuildImage(job *registry.Job, size int) error {
 			Cpus:       BUILD_CPU,
 			Mem:        BUILD_MEM,
 			ID:         "build-" + job.ID + "-" + strconv.Itoa(index),
-			Name:       job.Name + " [BUILD IMAGE]",
+			Name:       job.Name,
 			Type:       registry.TaskTypeBuild,
 			CreateTime: time.Now().UnixNano(),
 			JobID:      job.ID,
@@ -55,10 +55,14 @@ func (core *Core) BuildImage(job *registry.Job, size int) error {
 		}
 
 		err := core.AddTask(task.ID, task)
+		job.PushTask(task)
 		if err != nil {
 			log.Errorf("Error when add %d build image task: %v", index, err)
+			task.State = "TASK_FAILED"
+			job.PopLastTask()
 			continue
 		}
+
 	}
 	return nil
 }
@@ -81,7 +85,7 @@ func (core *Core) RunTask(job *registry.Job) {
 			taskInstance := &registry.Task{
 				JobID:       job.ID,
 				ID:          "task-" + job.ID + "-" + randID + "-" + strconv.Itoa(index),
-				Name:        job.Name + " [RUN TASK]",
+				Name:        job.Name,
 				DockerImage: job.Image,
 				Cpus:        task.Cpus,
 				Mem:         task.Mem,
@@ -107,9 +111,11 @@ func (core *Core) RunTask(job *registry.Job) {
 			}
 
 			err = core.AddTask(taskInstance.ID, taskInstance)
+			job.PushTask(taskInstance)
 			if err != nil {
 				task.State = "TASK_FAILED"
 				log.Errorf("Error when running task %v: %v", task.ID, err)
+				job.PopLastTask()
 				continue
 			}
 		}
