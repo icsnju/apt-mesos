@@ -1,5 +1,7 @@
 # apt-mesos
 
+[![Travis](https://img.shields.io/travis/icsnju/apt-mesos/master.svg?style=flat-square)](https://travis-ci.org/icsnju/apt-mesos)
+
 Apt-Mesos is a Mesos Framework for Testing which provides an easy way to build testing environment and schedule testing tasks in a multi-node cluster.
 
 The latest version is 0.2.0, which support:
@@ -51,7 +53,7 @@ Open your browser and visit `http://<server_listened_addr>`, then you can create
 ### Submit a task:
 
 ```
-$ curl -X POST -H "Accept: application/json" -H "Content-Type: application/json" <server_listened_addr>/api/tasks -d@task.json 
+$ curl -X POST -H "Accept: application/json" -H "Content-Type: application/json" <server_listened_addr>/api/tasks -d@task.json
 ```
 
 ### Task format
@@ -81,7 +83,7 @@ Usage of ./apt-mesos:
     	Run in debug mode
   -master string
     	Master to connect to <ip:port> (default "127.0.0.1:5050")
-``` 
+```
 
 ### Hack the WEBUI
 
