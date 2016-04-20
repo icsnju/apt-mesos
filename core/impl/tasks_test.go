@@ -4,11 +4,13 @@ import (
 	"testing"
 
 	"github.com/icsnju/apt-mesos/registry"
+	schedulerImpl "github.com/icsnju/apt-mesos/scheduler/impl"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 var (
-	c    = NewCore("192.168.33.1:3030", "192.168.33.10:5050")
+	s    = schedulerImpl.NewFCFSScheduler()
+	c    = NewCore("192.168.33.1:3030", "192.168.33.10:5050", s)
 	task = &registry.Task{
 		ID:    "1",
 		State: "TASK_WAITING",

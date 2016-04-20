@@ -1,0 +1,10 @@
+language: go
+sudo: required
+go:
+  - 1.6.1
+  - tip
+os:
+  - linux
+  - osx
+script:
+  - "make"

@@ -9,11 +9,13 @@ import (
 
 	"github.com/go-martini/martini"
 	core "github.com/icsnju/apt-mesos/core/impl"
+	schedulerImpl "github.com/icsnju/apt-mesos/scheduler/impl"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 var (
-	c      = core.NewCore("192.168.33.1:3030", "192.168.33.10:5050")
+	s      = schedulerImpl.NewFCFSScheduler()
+	c      = core.NewCore("192.168.33.1:3030", "192.168.33.10:5050", s)
 	h      = NewHandler(c)
 	m      = martini.Classic()
 	reader io.Reader
