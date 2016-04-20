@@ -57,3 +57,7 @@ func TestCopyDir(t *testing.T) {
 		defer os.RemoveAll("../utils-copy")
 	})
 }
+
+func TestListDir(t *testing.T) {
+	ListDir("/mnt/mfsmount")
+}

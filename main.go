@@ -7,6 +7,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	comm "github.com/icsnju/apt-mesos/communication"
 	core "github.com/icsnju/apt-mesos/core/impl"
+	"github.com/icsnju/apt-mesos/fs"
 	"github.com/icsnju/apt-mesos/scheduler"
 	schedulerImpl "github.com/icsnju/apt-mesos/scheduler/impl"
 )
@@ -42,8 +43,11 @@ func main() {
 	// start a new core
 	core := core.NewCore(addr, master, schedule)
 
+	// start a new file explorer
+	fe := fs.NewMfsFileExplorer()
+
 	// Start HTTP server
-	comm.ListenAndServe(addr, core)
+	comm.ListenAndServe(addr, core, fe)
 	log.Infof("Current scheduling stragy is %v", reflect.TypeOf(schedule))
 
 	// try to register framework to master

@@ -1,0 +1,16 @@
+name: cadvisor
+image: google/cadvisor:latest
+# context: /usr/local/cadvisor/build
+tasks:
+  name1:
+    cpu: 0.5
+    mem: 128
+    # disk: 0
+    scripts: /usr/bin/cadvisor -l
+    scale: 5
+    volumes:
+      - /:/rootfs
+      - /var/run:/var/run
+      - /var/lib/docker:/var/lib/docker
+    ports:
+      - 8080:%
