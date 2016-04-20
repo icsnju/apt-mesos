@@ -1,6 +1,6 @@
-.PHONY: all deps test validate 
+.PHONY: all deps test validate
 
-all: deps test validate
+all: test
 
 deps:
 	go get -t ./...
