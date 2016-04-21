@@ -51,7 +51,8 @@ func createRouter(core core.Core, clientHandlers *clientAPI.Handler, mesosHandle
 	// router.Get("/api/system/metrics", clientHandlers.SystemMetrics())
 
 	// create fs endpoints
-	router.Post("/api/fs", fsHandlers.Handle())
+	router.Post("/api/fs", fsHandlers.PostHandle())
+	router.Get("/api/fs", fsHandlers.GetHandle())
 
 	// create mesos endpoints
 	for method, routes := range mesosHandlers.Endpoints {

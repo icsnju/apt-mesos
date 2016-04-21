@@ -1,5 +1,7 @@
 package fs
 
+import "mime/multipart"
+
 type FileExplorer interface {
 	Init() error
 	ListDir(path string) ([]ListDirEntry, error)
@@ -8,6 +10,10 @@ type FileExplorer interface {
 	Delete(path string) error
 	Rename(oldPath string, newPath string) error
 	// Chmod(path string, code string) error
-	Mkdir(path string, name string) error
+	Mkdir(newPath string) error
+	Cat(path string) (string, error)
+	Write(path, content string) error
+	Download(path string) ([]byte, error)
+	Upload(path string, file *multipart.FileHeader) error
 	Close() error
 }
