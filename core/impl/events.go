@@ -39,7 +39,8 @@ func (core *Core) AddEvent(eventType mesosproto.Event_Type, event *mesosproto.Ev
 		}
 
 	} else if eventType == mesosproto.Event_UPDATE {
-		if event.GetUpdate().GetStatus().GetState().String() == "TASK_FINISHED" {
+		updateStatus := event.GetUpdate().GetStatus().GetState().String()
+		if updateStatus == "TASK_FINISHED" {
 			task, err := core.GetTask(event.GetUpdate().GetStatus().GetTaskId().GetValue())
 			log.Debugf("Task %v finished", task.ID)
 
@@ -58,7 +59,20 @@ func (core *Core) AddEvent(eventType mesosproto.Event_Type, event *mesosproto.Ev
 					})
 				}
 			}
+		} else if updateStatus == "TASK_FAILED" || updateStatus == "TASK_KILLED" || updateStatus == "TASK_LOST" {
+			task, err := core.GetTask(event.GetUpdate().GetStatus().GetTaskId().GetValue())
+			log.Debugf("Task %v %s", task.ID, updateStatus)
+
+			// if task has jobID and is failed || killed || lost
+			// update its job's status and health
+			if err == nil && task.JobID != "" {
+				job, err := core.GetJob(task.JobID)
+				if err != nil {
+					job.Health = registry.UnHealthy
+				}
+			}
 		}
+
 	}
 
 	if c, ok := core.events[eventType]; ok {

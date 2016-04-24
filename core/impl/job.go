@@ -27,21 +27,22 @@ func (core *Core) StartJob(job *registry.Job) error {
 	}
 
 	if job.ContextDir != "" {
-		core.BuildImage(job, len(job.Tasks))
+		core.BuildImage(job)
 	}
 
 	// TODO split input
+	job.Status = registry.StatusRunning
 	core.RunTask(job)
 
 	return nil
 }
 
-func (core *Core) BuildImage(job *registry.Job, size int) error {
+func (core *Core) BuildImage(job *registry.Job) error {
 	// Build Images before run test task
 	// TaskID: build-{JobID}-{randID}-{NumberOfScale}
 	log.Infof("Create task for job(%v) to build image", job.ID)
 	job.Image = "image-" + job.ID
-	for index := 1; index <= size; index++ {
+	for index := 1; index <= job.BuildNodeNumber(); index++ {
 		task := &registry.Task{
 			Cpus:       BUILD_CPU,
 			Mem:        BUILD_MEM,
