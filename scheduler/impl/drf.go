@@ -66,7 +66,6 @@ func (scheduler *DRFScheduler) Schedule(offers []*mesosproto.Offer) (*registry.T
 	// get first task
 	element := heap.Pop(scheduler.Heap).(*structure.DRFElement)
 	job := element.Job
-	log.Warn(element.DominantResource)
 	task := job.FirstTask()
 
 	// search suitable offer for first task of this job

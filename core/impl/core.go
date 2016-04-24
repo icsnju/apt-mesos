@@ -30,6 +30,7 @@ type Core struct {
 	jobs          registry.Registry
 	offers        []*mesosproto.Offer
 	scheduler     scheduler.Scheduler
+	metric        registry.SystemMetric
 
 	Endpoints map[string]map[string]func(w http.ResponseWriter, r *http.Request) error
 }
@@ -127,6 +128,7 @@ func (core *Core) schedule() {
 					log.Error(err)
 					task.State = "TASK_FAILED"
 				}
+				task.RunTime = time.Now().UnixNano()
 				core.updateNodeByTask(offer.GetSlaveId().GetValue(), task)
 				core.updateJobByTask(task.JobID, task)
 			} else {

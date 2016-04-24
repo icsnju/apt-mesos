@@ -46,6 +46,7 @@ func createRouter(core core.Core, clientHandlers *clientAPI.Handler, mesosHandle
 	router.Post("/api/jobs", clientHandlers.CreateJob())
 	router.Get("/api/nodes", clientHandlers.GetNodes())
 	router.Get("/api/system/usage", clientHandlers.SystemUsage())
+	router.Get("/api/system/metric", clientHandlers.SystemMetric())
 
 	// create monitor endpoints
 	// router.Get("/api/system/metrics", clientHandlers.SystemMetrics())

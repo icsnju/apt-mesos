@@ -226,3 +226,11 @@ func (h *Handler) SystemUsage() martini.Handler {
 		writeResponse(w, http.StatusOK, metric)
 	}
 }
+
+func (h *Handler) SystemMetric() martini.Handler {
+	return func(w http.ResponseWriter, r *http.Request, params martini.Params) {
+		metric := h.core.GetSystemMetric()
+
+		writeResponse(w, http.StatusOK, metric)
+	}
+}

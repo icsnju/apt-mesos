@@ -45,5 +45,6 @@ type Core interface {
 
 	ReadFile(id string, filename string) (string, error)
 	GetSystemUsage() *registry.Metrics
+	GetSystemMetric() *registry.SystemMetric
 	MergePorts(ports []*registry.Port) *mesosproto.Resource
 }
