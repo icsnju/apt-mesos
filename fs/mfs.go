@@ -95,7 +95,9 @@ func (fe *MfsFileExplorer) ListDir(path string) ([]ListDirEntry, error) {
 }
 
 func (fe *MfsFileExplorer) Move(path string, newPath string) error {
-	err := fe.Copy(normalizePath(path), normalizePath(newPath))
+	// at there we do not have to normalize path
+	// it will be normalized in function copy
+	err := fe.Copy(path, newPath)
 	if err != nil {
 		return err
 	}
