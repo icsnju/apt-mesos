@@ -67,3 +67,26 @@ func TestRangeInside(t *testing.T) {
 		So(RangeInside(range1, range6), ShouldBeFalse)
 	})
 }
+
+func TestGetOnePointFromRange(t *testing.T) {
+	Convey("get one point", t, func() {
+		So(GetPointOfRange(range1), ShouldEqual, 10)
+	})
+}
+
+func TestGeneratePort(t *testing.T) {
+	Convey("generate port", t, func() {
+		var resources []*mesosproto.Resource
+		ranges := &mesosproto.Value_Ranges{}
+		resource := &mesosproto.Resource{
+			Name:   proto.String("ports"),
+			Ranges: ranges,
+		}
+		So(resource, ShouldNotBeNil)
+		So(resource.Ranges, ShouldNotBeNil)
+
+		resource.Ranges.Range = append(resource.Ranges.Range, range1)
+		resources = append(resources, resource)
+		So(GeneratePort(resources), ShouldEqual, 10)
+	})
+}

@@ -26,11 +26,11 @@ const (
 type Task struct {
 	ID         string                  `json:"id"`
 	Name       string                  `json:"name"`
-	Cpus       float64                 `json:"cpus,string"`
-	Mem        float64                 `json:"mem,string"`
-	Disk       float64                 `json:"disk,string"`
+	Cpus       float64                 `json:"cpus"`
+	Mem        float64                 `json:"mem"`
+	Disk       float64                 `json:"disk"`
 	Resources  []*mesosproto.Resource  `json:"resources,omitempty"`
-	Attributes []*mesosproto.Attribute `json:attributes,omitempty`
+	Attributes []*mesosproto.Attribute `json:"attributes,omitempty"`
 	SLA        string                  `json:"sla"`
 
 	// Monitoring
@@ -68,6 +68,8 @@ type Task struct {
 	Type     TaskType `enum=TaskType,json:"type,omitempty"`
 	JobID    string   `json:"job_id"`
 	Scale    int      `json:"scale"`
+
+	Build bool
 }
 
 // DockerTask is docker information struct

@@ -50,6 +50,7 @@ func (core *Core) updateNodeByTask(id string, task *registry.Task) {
 			node.OfferedResources[resource.GetName()].Ranges = resourceManager.RangeUsedUpdate(resource.GetRanges(), node.OfferedResources[resource.GetName()].GetRanges())
 		}
 	}
+	log.Warn(node.OfferedResources)
 	node.Tasks = append(node.Tasks, task)
 	node.LastUpdateTime = time.Now().Unix()
 }

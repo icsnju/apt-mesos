@@ -12,6 +12,7 @@ import (
 	"github.com/icsnju/apt-mesos/docker"
 	"github.com/icsnju/apt-mesos/mesosproto"
 	"github.com/icsnju/apt-mesos/registry"
+	"github.com/icsnju/apt-mesos/scheduler/impl/resource"
 	"github.com/icsnju/apt-mesos/utils"
 )
 
@@ -149,13 +150,17 @@ func (core *Core) CreateSingleTaskInfo(offer *mesosproto.Offer, resources []*mes
 	}
 
 	for _, port := range task.Ports {
+		hostPort := port.HostPort
+		if hostPort == 0 {
+			hostPort = resource.GeneratePort(offer.GetResources())
+		}
 		dockerInfo.PortMappings = append(dockerInfo.PortMappings, &mesosproto.ContainerInfo_DockerInfo_PortMapping{
 			ContainerPort: &port.ContainerPort,
-			HostPort:      &port.HostPort,
+			HostPort:      &hostPort,
 		})
 		portResources = append(portResources, &mesosproto.Value_Range{
-			Begin: proto.Uint64(uint64(port.HostPort)),
-			End:   proto.Uint64(uint64(port.HostPort)),
+			Begin: proto.Uint64(uint64(hostPort)),
+			End:   proto.Uint64(uint64(hostPort)),
 		})
 	}
 
