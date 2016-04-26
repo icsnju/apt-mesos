@@ -1,6 +1,6 @@
 # apt-mesos
 
-[![Travis](https://img.shields.io/travis/icsnju/apt-mesos/master.svg?style=flat-square)](https://travis-ci.org/icsnju/apt-mesos)
+[![Travis](https://img.shields.io/travis/icsnju/apt-mesos/master.svg)](https://travis-ci.org/icsnju/apt-mesos)
 
 Apt-Mesos is a Mesos Framework for Testing which provides an easy way to build testing environment and schedule testing tasks in a multi-node cluster.
 
