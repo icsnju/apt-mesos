@@ -18,6 +18,7 @@ type Job struct {
 	ContextDir   string             `json:"context_dir"`
 	CreateTime   int64              `json:"create_time"`
 	Tasks        []*Task            `json:"tasks"`
+	TaskInstance []*Task            `json:"task_instance"`
 	TotalTaskLen int                `json:"total_task_len"`
 	TaskQueueLen int                `json:"task_queue_len"`
 	TaskQueue    list.List          `json:"task_queue"`
@@ -91,6 +92,7 @@ func (job *Job) LastTask() *Task {
 
 func (job *Job) PushTask(task *Task) {
 	job.TaskQueue.PushBack(task)
+	job.TaskInstance = append(job.TaskInstance, task)
 	job.TaskQueueLen = job.TaskQueue.Len()
 }
 
