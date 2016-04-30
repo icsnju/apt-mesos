@@ -218,6 +218,22 @@ func (h *Handler) GetFile() martini.Handler {
 	}
 }
 
+func (h *Handler) DownloadFile() martini.Handler {
+	return func(w http.ResponseWriter, r *http.Request, params martini.Params) {
+		id := params["id"]
+		file := params["file"]
+
+		content, err := h.core.ReadFile(id, file)
+		if err != nil {
+			writeError(w, err)
+			return
+		}
+		data := []byte(content)
+		w.Header().Set("Content-Type", "text/plain")
+		w.Write(data)
+	}
+}
+
 //
 func (h *Handler) SystemUsage() martini.Handler {
 	return func(w http.ResponseWriter, r *http.Request, params martini.Params) {
