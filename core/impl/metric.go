@@ -77,9 +77,10 @@ func (core *Core) metricMonitor() {
 }
 
 func (core *Core) addFailureMetric(value float32) {
-	if len(core.metric.FailureRate) > 30 {
-		core.metric.FailureRate = core.metric.FailureRate[1:]
+	if len(core.metric.FailureRate) == 0 {
+		core.metric.FailureRate = make([]registry.SystemMetricItem, 15)
 	}
+	core.metric.FailureRate = core.metric.FailureRate[1:]
 	core.metric.FailureRate = append(core.metric.FailureRate, registry.SystemMetricItem{
 		Value:     value,
 		Timestamp: time.Now().UnixNano(),
@@ -87,9 +88,10 @@ func (core *Core) addFailureMetric(value float32) {
 }
 
 func (core *Core) addWaittimeMetric(value float32) {
-	if len(core.metric.WaitTime) > 60 {
-		core.metric.WaitTime = core.metric.WaitTime[1:]
+	if len(core.metric.WaitTime) == 0 {
+		core.metric.WaitTime = make([]registry.SystemMetricItem, 15)
 	}
+	core.metric.WaitTime = core.metric.WaitTime[1:]
 	core.metric.WaitTime = append(core.metric.WaitTime, registry.SystemMetricItem{
 		Value:     value,
 		Timestamp: time.Now().UnixNano(),
