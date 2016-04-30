@@ -150,17 +150,17 @@ func (core *Core) CreateSingleTaskInfo(offer *mesosproto.Offer, resources []*mes
 	}
 
 	for _, port := range task.Ports {
-		hostPort := port.HostPort
-		if hostPort == 0 {
-			hostPort = resource.GeneratePort(offer.GetResources())
+		// hostPort := port.HostPort
+		if port.hostPort == 0 {
+			port.hostPort = resource.GeneratePort(offer.GetResources())
 		}
 		dockerInfo.PortMappings = append(dockerInfo.PortMappings, &mesosproto.ContainerInfo_DockerInfo_PortMapping{
 			ContainerPort: &port.ContainerPort,
-			HostPort:      &hostPort,
+			HostPort:      &port.hostPort,
 		})
 		portResources = append(portResources, &mesosproto.Value_Range{
-			Begin: proto.Uint64(uint64(hostPort)),
-			End:   proto.Uint64(uint64(hostPort)),
+			Begin: proto.Uint64(uint64(port.hostPort)),
+			End:   proto.Uint64(uint64(port.hostPort)),
 		})
 	}
 
