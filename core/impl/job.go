@@ -84,6 +84,16 @@ func (core *Core) RunTask(job *registry.Job) {
 		}
 
 		for index := 1; index <= task.Scale; index++ {
+			// To avoid use same pointer of ports
+			// Instantiate a new array
+			var ports []*registry.Port
+			for _, port := range task.Ports {
+				ports = append(ports, &registry.Port{
+					ContainerPort: port.ContainerPort,
+					HostPort:      port.HostPort,
+				})
+			}
+
 			taskInstance := &registry.Task{
 				JobID:       job.ID,
 				ID:          "task-" + job.ID + "-" + randID + "-" + strconv.Itoa(index),
@@ -92,7 +102,7 @@ func (core *Core) RunTask(job *registry.Job) {
 				Cpus:        task.Cpus,
 				Mem:         task.Mem,
 				Disk:        task.Disk,
-				Ports:       task.Ports,
+				Ports:       ports,
 				Command:     task.Command,
 				Resources:   task.Resources,
 				Attributes:  task.Attributes,
@@ -150,17 +160,17 @@ func (core *Core) CreateSingleTaskInfo(offer *mesosproto.Offer, resources []*mes
 	}
 
 	for _, port := range task.Ports {
-		// hostPort := port.HostPort
-		if port.hostPort == 0 {
-			port.hostPort = resource.GeneratePort(offer.GetResources())
+		if port.HostPort == 0 {
+			port.HostPort = resource.GeneratePort(offer.GetResources())
 		}
+
 		dockerInfo.PortMappings = append(dockerInfo.PortMappings, &mesosproto.ContainerInfo_DockerInfo_PortMapping{
 			ContainerPort: &port.ContainerPort,
-			HostPort:      &port.hostPort,
+			HostPort:      &port.HostPort,
 		})
 		portResources = append(portResources, &mesosproto.Value_Range{
-			Begin: proto.Uint64(uint64(port.hostPort)),
-			End:   proto.Uint64(uint64(port.hostPort)),
+			Begin: proto.Uint64(uint64(port.HostPort)),
+			End:   proto.Uint64(uint64(port.HostPort)),
 		})
 	}
 

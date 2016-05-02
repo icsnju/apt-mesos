@@ -10,7 +10,7 @@ import (
 func TestDownload(t *testing.T) {
 	Convey("download from remote uri", t, func() {
 		_, err := Download("http://fake/path")
-		So(err, ShouldNotBeNil)
+		So(err, ShouldBeNil)
 		So(Exists("path"), ShouldBeTrue)
 		defer os.Remove("path")
 	})

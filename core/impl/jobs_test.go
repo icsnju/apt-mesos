@@ -1,6 +1,7 @@
 package impl
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -85,5 +86,31 @@ func TestGetNotFinishedJobs(t *testing.T) {
 		testJob.PopFirstTask()
 		jobs = c.GetNotFinishedJobs()
 		So(len(jobs), ShouldEqual, 0)
+	})
+}
+
+func TestGeneratePortToTask(t *testing.T) {
+	Convey("generate port to task", t, func() {
+		port1 := &registry.Port{
+			ContainerPort: 8080,
+		}
+		port2 := &registry.Port{
+			ContainerPort: 8080,
+		}
+		task1 := &registry.Task{
+			ID: "1",
+		}
+		task2 := &registry.Task{
+			ID: "2",
+		}
+		task1.Ports = append(task.Ports, port1)
+		task2.Ports = append(task.Ports, port2)
+		testJob.TaskQueue.PushBack(task1)
+		testJob.TaskQueue.PushBack(task2)
+		task := testJob.PopFirstTask()
+		fmt.Println(task.Ports[0].HostPort)
+		task.Ports[0].HostPort = 2020
+		task = testJob.PopFirstTask()
+		So(task.Ports[0].HostPort, ShouldEqual, 0)
 	})
 }
