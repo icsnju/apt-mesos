@@ -67,7 +67,7 @@ func (core *Core) AddEvent(eventType mesosproto.Event_Type, event *mesosproto.Ev
 			// update its job's status and health
 			if err == nil && task.JobID != "" {
 				job, err := core.GetJob(task.JobID)
-				if err != nil {
+				if err == nil {
 					job.Health = registry.UnHealthy
 				}
 			}

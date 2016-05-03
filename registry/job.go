@@ -27,6 +27,8 @@ type Job struct {
 	Health       string             `json:"health"`
 	Status       string             `json:"status"`
 
+	InputPath     string                          `json:"input_path"`
+	OutputPath    string                          `json:"output_path"`
 	UsedResources map[string]*mesosproto.Resource `json:"used_resource"`
 	SLAOffers     map[string]string
 }

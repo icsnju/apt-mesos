@@ -17,8 +17,6 @@ var (
 // ResourcesMatch check if a offer fit task's resources
 func ResourcesMatch(task *registry.Task, offer *mesosproto.Offer) bool {
 	BuildBasicResources(task)
-	log.Warnf("task:%v", task.Resources)
-	log.Warnf("offer:%v", offer.Resources)
 	for _, resource := range task.Resources {
 		found := false
 		for _, offerResource := range offer.GetResources() {

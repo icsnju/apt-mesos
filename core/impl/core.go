@@ -116,7 +116,7 @@ func (core *Core) schedule() {
 	for {
 		if core.scheduler.CheckFinished(); core.scheduler.HasJob() {
 			for index, offer := range core.offers {
-				log.Debugf("Current offers[%d]: %v", index, offer)
+				log.Debugf("Current offers[%d]: %v %v", index, offer.GetHostname(), offer.GetResources())
 			}
 
 			task, offer, success := core.scheduler.Schedule(core.offers)
