@@ -37,7 +37,7 @@ func TestAddTask(t *testing.T) {
 	Convey("add task api", t, func() {
 		m.Post("/api/tasks", h.AddTask())
 
-		taskJSON := `{"name": "busybox","docker_image": "busybox","cpu": "0.5","mem":"16","cmd": "ls"}`
+		taskJSON := `{"name": "busybox","docker_image": "busybox","cpu": 0.5,"mem":16,"cmd": "ls"}`
 		reader = strings.NewReader(taskJSON)
 		res := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/api/tasks", reader)

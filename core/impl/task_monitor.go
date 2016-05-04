@@ -17,7 +17,11 @@ func (core *Core) updateTasksByMetrics(metrics *registry.MetricsData) {
 		if framework.ID == core.frameworkInfo.GetId().GetValue() {
 			// fetch running task
 			for _, task := range framework.Tasks {
-				taskInfo, _ := core.GetTask(task.ID)
+				taskInfo, err := core.GetTask(task.ID)
+				// if task was nil
+				if err != nil {
+					continue
+				}
 				// get executorID
 				if taskInfo.ExecutorID == "" {
 					taskInfo.ExecutorID = task.ExecutorID

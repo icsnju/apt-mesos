@@ -119,3 +119,7 @@ func ParseRanges(text string) (*mesosproto.Value_Ranges, error) {
 	}
 	return ranges, nil
 }
+
+func GetPointOfRange(r *mesosproto.Value_Range) uint64 {
+	return r.GetBegin()
+}

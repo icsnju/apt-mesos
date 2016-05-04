@@ -5,8 +5,10 @@ import (
 
 	"github.com/go-martini/martini"
 	clientAPI "github.com/icsnju/apt-mesos/communication/api/client"
+	fsAPI "github.com/icsnju/apt-mesos/communication/api/fs"
 	mesosAPI "github.com/icsnju/apt-mesos/communication/api/mesos"
 	"github.com/icsnju/apt-mesos/core"
+	"github.com/icsnju/apt-mesos/fs"
 	"github.com/martini-contrib/cors"
 	"github.com/prometheus/common/log"
 )
@@ -29,7 +31,7 @@ func recovery() martini.Handler {
 	}
 }
 
-func createRouter(core core.Core, clientHandlers *clientAPI.Handler, mesosHandlers *mesosAPI.Handler) martini.Router {
+func createRouter(core core.Core, clientHandlers *clientAPI.Handler, mesosHandlers *mesosAPI.Handler, fsHandlers *fsAPI.Handler) martini.Router {
 	router := martini.NewRouter()
 
 	// create user endpoints
@@ -40,13 +42,19 @@ func createRouter(core core.Core, clientHandlers *clientAPI.Handler, mesosHandle
 	router.Delete("/api/tasks/:id", clientHandlers.DeleteTask())
 	router.Put("/api/tasks/:id/kill", clientHandlers.KillTask())
 	router.Get("/api/tasks/:id/file/:file", clientHandlers.GetFile())
+	router.Get("/api/tasks/:id/file/:file/download", clientHandlers.DownloadFile())
 	router.Get("/api/jobs", clientHandlers.ListJobs())
 	router.Post("/api/jobs", clientHandlers.CreateJob())
 	router.Get("/api/nodes", clientHandlers.GetNodes())
 	router.Get("/api/system/usage", clientHandlers.SystemUsage())
+	router.Get("/api/system/metric", clientHandlers.SystemMetric())
 
 	// create monitor endpoints
 	// router.Get("/api/system/metrics", clientHandlers.SystemMetrics())
+
+	// create fs endpoints
+	router.Post("/api/fs", fsHandlers.PostHandle())
+	router.Get("/api/fs", fsHandlers.GetHandle())
 
 	// create mesos endpoints
 	for method, routes := range mesosHandlers.Endpoints {
@@ -68,11 +76,12 @@ func createRouter(core core.Core, clientHandlers *clientAPI.Handler, mesosHandle
 }
 
 // ListenAndServe start the server
-func ListenAndServe(addr string, core core.Core) {
+func ListenAndServe(addr string, core core.Core, fe fs.FileExplorer) {
 	log.Infof("REST listening at: http://%v", core.GetAddr())
 	clientHandlers := clientAPI.NewHandler(core)
 	mesosHandlers := mesosAPI.NewHandler(core)
-	r := createRouter(core, clientHandlers, mesosHandlers)
+	fsHandlers := fsAPI.NewHandler(fe)
+	r := createRouter(core, clientHandlers, mesosHandlers, fsHandlers)
 
 	m := martini.New()
 	m.Use(cors.Allow(&cors.Options{

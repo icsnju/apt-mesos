@@ -2,17 +2,23 @@ package registry
 
 // Metrics provide some useful metrics to frontend
 type Metrics struct {
-	FreeCpus     float64 `json:"free_cpus"`
-	FreeMem      float64 `json:"free_mem"`
-	FreeDisk     float64 `json:"free_disk"`
-	UsedCpus     float64 `json:"used_cpus"`
-	UsedMem      float64 `json:"used_mem"`
-	UsedDisk     float64 `json:"used_disk"`
-	TaskRunning  int64   `json:"task_running"`
-	TaskStaging  int64   `json:"task_staging"`
-	TaskFinished int64   `json:"task_finished"`
-	TaskKilled   int64   `json:"task_killed"`
+	FreeCpus float64 `json:"free_cpus"`
+	FreeMem  float64 `json:"free_mem"`
+	FreeDisk float64 `json:"free_disk"`
+	UsedCpus float64 `json:"used_cpus"`
+	UsedMem  float64 `json:"used_mem"`
+	UsedDisk float64 `json:"used_disk"`
 	//TODO add customed resources
+}
+
+type SystemMetric struct {
+	FailureRate []SystemMetricItem `json:"failure_rate"`
+	WaitTime    []SystemMetricItem `json:"wait_time"`
+}
+
+type SystemMetricItem struct {
+	Value     interface{} `json:"value"`
+	Timestamp int64       `json:"timestamp"`
 }
 
 // MetricsData is a struct suit for json data from mesos-master

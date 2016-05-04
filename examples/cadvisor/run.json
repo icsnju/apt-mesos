@@ -3,8 +3,8 @@
     "image": "google/cadvisor:latest",
     "tasks": [
       {
-        "cpus": "0.5",
-        "mem": "64",
+        "cpus": 0.5,
+        "mem": 64,
         "cmd": "/usr/bin/cadvisor -l",
         "scale": 5,
         "volumes": [
@@ -31,8 +31,7 @@
         ],
         "port_mappings": [
             {
-                "host_port":"31502",
-                "container_port":"8080"
+                "container_port": 8080
             }
         ]
       }

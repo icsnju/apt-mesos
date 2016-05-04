@@ -8,7 +8,6 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/go-martini/martini"
 	"github.com/icsnju/apt-mesos/core"
-	"github.com/icsnju/apt-mesos/mesosproto"
 	"github.com/icsnju/apt-mesos/registry"
 	"github.com/icsnju/apt-mesos/utils"
 )
@@ -158,17 +157,11 @@ func (h *Handler) CreateJob() martini.Handler {
 			return
 		}
 
-		// generate task id
-		randID, err := utils.Encode(6)
+		err := job.InitBasicParams()
 		if err != nil {
 			writeError(w, err)
 			return
 		}
-
-		job.ID = randID
-		job.CreateTime = time.Now().UnixNano()
-		job.SLAOffers = make(map[string]string)
-		job.UsedResources = make(map[string]*mesosproto.Resource)
 
 		log.WithField("Job", job).Infof("Receive job: %v", job.ID)
 		err = h.core.AddJob(job.ID, job)
@@ -225,10 +218,34 @@ func (h *Handler) GetFile() martini.Handler {
 	}
 }
 
+func (h *Handler) DownloadFile() martini.Handler {
+	return func(w http.ResponseWriter, r *http.Request, params martini.Params) {
+		id := params["id"]
+		file := params["file"]
+
+		content, err := h.core.ReadFile(id, file)
+		if err != nil {
+			writeError(w, err)
+			return
+		}
+		data := []byte(content)
+		w.Header().Set("Content-Type", "text/plain")
+		w.Write(data)
+	}
+}
+
 //
 func (h *Handler) SystemUsage() martini.Handler {
 	return func(w http.ResponseWriter, r *http.Request, params martini.Params) {
 		metric := h.core.GetSystemUsage()
+
+		writeResponse(w, http.StatusOK, metric)
+	}
+}
+
+func (h *Handler) SystemMetric() martini.Handler {
+	return func(w http.ResponseWriter, r *http.Request, params martini.Params) {
+		metric := h.core.GetSystemMetric()
 
 		writeResponse(w, http.StatusOK, metric)
 	}

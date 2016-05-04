@@ -1,0 +1,16 @@
+{
+    "image": "docker.io/haidaocht/python-opencv",
+    "name": "opencv",
+    "tasks": [
+      {
+        "cpus": 1,
+        "mem": 128,
+        "cmd": "python /mnt/mfsmount/DarkChannelRecover.py",
+        "scale": 1,
+        "volumes": [{
+          "host_path": "/mnt/mfsmount",
+          "container_path": "/mnt/mfsmount"
+        }]
+      }
+    ]
+}

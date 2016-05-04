@@ -1,14 +1,17 @@
 {
-    "name": "busybox",
-    "cpus": "0.5",
-    "mem": "16",
-    "cmd": "ls",
-    "docker_image": "busybox",
-    "volumes": [
-        {
-            "container_path":"/data",
-            "host_path":"/vagrant",
-            "mode": "rw"
-        }
+    "name": "tomcat",
+    "docker_image": "tomcat",
+    "tasks": [
+      {
+        "cpus": "0.5",
+        "mem": "16",
+        "cmd": "catalina.sh run",
+        "port_mappings": [
+            {
+                "container_port":"8080"
+            }
+        ],
+        "scale": 5
+      }
     ]
 }

@@ -12,6 +12,7 @@ import (
 	"github.com/icsnju/apt-mesos/docker"
 	"github.com/icsnju/apt-mesos/mesosproto"
 	"github.com/icsnju/apt-mesos/registry"
+	"github.com/icsnju/apt-mesos/scheduler/impl/resource"
 	"github.com/icsnju/apt-mesos/utils"
 )
 
@@ -27,21 +28,22 @@ func (core *Core) StartJob(job *registry.Job) error {
 	}
 
 	if job.ContextDir != "" {
-		core.BuildImage(job, len(job.Tasks))
+		core.BuildImage(job)
 	}
 
 	// TODO split input
+	job.Status = registry.StatusRunning
 	core.RunTask(job)
 
 	return nil
 }
 
-func (core *Core) BuildImage(job *registry.Job, size int) error {
+func (core *Core) BuildImage(job *registry.Job) error {
 	// Build Images before run test task
 	// TaskID: build-{JobID}-{randID}-{NumberOfScale}
 	log.Infof("Create task for job(%v) to build image", job.ID)
 	job.Image = "image-" + job.ID
-	for index := 1; index <= size; index++ {
+	for index := 1; index <= job.BuildNodeNumber(); index++ {
 		task := &registry.Task{
 			Cpus:       BUILD_CPU,
 			Mem:        BUILD_MEM,
@@ -82,6 +84,16 @@ func (core *Core) RunTask(job *registry.Job) {
 		}
 
 		for index := 1; index <= task.Scale; index++ {
+			// To avoid use same pointer of ports
+			// Instantiate a new array
+			var ports []*registry.Port
+			for _, port := range task.Ports {
+				ports = append(ports, &registry.Port{
+					ContainerPort: port.ContainerPort,
+					HostPort:      port.HostPort,
+				})
+			}
+
 			taskInstance := &registry.Task{
 				JobID:       job.ID,
 				ID:          "task-" + job.ID + "-" + randID + "-" + strconv.Itoa(index),
@@ -90,7 +102,7 @@ func (core *Core) RunTask(job *registry.Job) {
 				Cpus:        task.Cpus,
 				Mem:         task.Mem,
 				Disk:        task.Disk,
-				Ports:       task.Ports,
+				Ports:       ports,
 				Command:     task.Command,
 				Resources:   task.Resources,
 				Attributes:  task.Attributes,
@@ -148,6 +160,10 @@ func (core *Core) CreateSingleTaskInfo(offer *mesosproto.Offer, resources []*mes
 	}
 
 	for _, port := range task.Ports {
+		if port.HostPort == 0 {
+			port.HostPort = resource.GeneratePort(offer.GetResources())
+		}
+
 		dockerInfo.PortMappings = append(dockerInfo.PortMappings, &mesosproto.ContainerInfo_DockerInfo_PortMapping{
 			ContainerPort: &port.ContainerPort,
 			HostPort:      &port.HostPort,

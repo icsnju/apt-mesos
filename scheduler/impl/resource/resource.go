@@ -91,6 +91,9 @@ func BuildEmptyResources() []*mesosproto.Resource {
 // BuildBasicResources build basic resources
 // including cpus, mem, disk, ports
 func BuildBasicResources(task *registry.Task) {
+	if task.Build {
+		return
+	}
 	if task.Cpus > 0 {
 		task.Resources = append(task.Resources, &mesosproto.Resource{
 			Name:   proto.String("cpus"),
@@ -118,6 +121,9 @@ func BuildBasicResources(task *registry.Task) {
 	if len(task.Ports) > 0 {
 		ranges := &mesosproto.Value_Ranges{}
 		for _, port := range task.Ports {
+			if port.HostPort == 0 {
+				continue
+			}
 			ranges.Range = append(ranges.Range, &mesosproto.Value_Range{
 				Begin: proto.Uint64(uint64(port.HostPort)),
 				End:   proto.Uint64(uint64(port.HostPort)),
@@ -130,6 +136,7 @@ func BuildBasicResources(task *registry.Task) {
 			Ranges: ranges,
 		})
 	}
+	task.Build = true
 }
 
 // BuildResourcesFromMap build resources from a map
@@ -156,4 +163,15 @@ func BuildResourcesFromMap(resourceMap map[string]interface{}) map[string]*mesos
 		}
 	}
 	return resources
+}
+
+func GeneratePort(resources []*mesosproto.Resource) uint32 {
+	for _, resource := range resources {
+		if resource.GetName() == "ports" {
+			for _, r := range resource.GetRanges().GetRange() {
+				return uint32(GetPointOfRange(r))
+			}
+		}
+	}
+	return 0
 }

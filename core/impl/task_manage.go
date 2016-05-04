@@ -11,7 +11,7 @@ import (
 
 // ErrTaskNotExists defined errors
 var (
-	ErrTaskNotExists             = errors.New("Specific task not exist")
+	ErrTaskNotExists             = errors.New("Task not exist")
 	ErrBasicResourceNotSatisfied = errors.New("Cpus and mem must be required in resources")
 )
 
