@@ -7,38 +7,62 @@ import (
 
 	"github.com/icsnju/apt-mesos/docker"
 	"github.com/icsnju/apt-mesos/mesosproto"
+	"github.com/icsnju/apt-mesos/splitter"
+	splitterImpl "github.com/icsnju/apt-mesos/splitter/impl"
 	"github.com/icsnju/apt-mesos/utils"
 )
 
 type Job struct {
-	ID           string             `json:"id"`
-	Name         string             `json:"name"`
-	Image        string             `json:"image"`
-	Dockerfile   *docker.Dockerfile `json:"dockerfile"`
-	ContextDir   string             `json:"context_dir"`
-	CreateTime   int64              `json:"create_time"`
-	Tasks        []*Task            `json:"tasks"`
-	TaskInstance []*Task            `json:"task_instance"`
-	TotalTaskLen int                `json:"total_task_len"`
-	TaskQueueLen int                `json:"task_queue_len"`
-	TaskQueue    list.List          `json:"task_queue"`
-	Splitter     string             `json:"splitter"`
-	Input        string             `json:"input"`
-	Health       string             `json:"health"`
-	Status       string             `json:"status"`
+	// Basic
+	ID   string `json:"id"`
+	Name string `json:"name"`
 
-	InputPath     string                          `json:"input_path"`
-	OutputPath    string                          `json:"output_path"`
+	// Docker Settings
+	Image      string             `json:"image"`
+	Dockerfile *docker.Dockerfile `json:"dockerfile"`
+	ContextDir string             `json:"context_dir"`
+
+	// Task manager
+	Tasks        []*Task   `json:"tasks"`
+	TaskInstance []*Task   `json:"task_instance"`
+	TotalTaskLen int       `json:"total_task_len"`
+	TaskQueue    list.List `json:"task_queue"`
+	TaskQueueLen int       `json:"task_queue_len"`
+
+	// Timestamp
+	CreateTime int64 `json:"create_time"`
+	StartTime  int64 `json:"start_time"`
+	FinishTime int64 `json:"finish_time"`
+
+	// Splitter
+	SplitterType string `json:"splitter_type"`
+	Splitter     splitter.Splitter
+	InputPath    string `json:"input_path"`
+	OutputPath   string `json:"output_path"`
+
+	// Job monitoring
+	Health string `json:"health"`
+	Status string `json:"status"`
+
+	// Resources
 	UsedResources map[string]*mesosproto.Resource `json:"used_resource"`
 	SLAOffers     map[string]string
 }
 
-var (
-	Healthy        = "Healthy"
-	UnHealthy      = "Unhealthy"
+const (
+	Healthy   = "Healthy"
+	UnHealthy = "Unhealthy"
+)
+
+const (
 	StatusRunning  = "Running"
 	StatusFinished = "Finished"
 	StatusFailed   = "Failed"
+)
+
+const (
+	FileSplitterType = "file_splitter"
+	LineSplitterType = "line_splitter"
 )
 
 func (job *Job) InitBasicParams() error {
@@ -53,6 +77,8 @@ func (job *Job) InitBasicParams() error {
 	job.UsedResources = make(map[string]*mesosproto.Resource)
 	job.Health = Healthy
 	job.Status = StatusRunning
+
+	// init task
 	if job.ContextDir != "" {
 		job.TotalTaskLen = job.BuildNodeNumber()
 	} else {
@@ -60,6 +86,13 @@ func (job *Job) InitBasicParams() error {
 	}
 	for _, task := range job.Tasks {
 		job.TotalTaskLen += task.Scale
+	}
+
+	// init splitter
+	if job.SplitterType == FileSplitterType {
+		job.Splitter = splitterImpl.NewFileSplitter()
+	} else if job.SplitterType == LineSplitterType {
+		job.Splitter = splitterImpl.NewLineSplitter()
 	}
 	return nil
 }
