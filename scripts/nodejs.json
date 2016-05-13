@@ -1,0 +1,17 @@
+{
+    "name": "nodejs",
+    "context_dir": "/Users/jeff/workspace/go/src/github.com/icsnju/apt-mesos/examples/nodejs",
+    "tasks": [
+      {
+        "cpus": "0.5",
+        "mem": "16",
+        "cmd": "node -v",
+        "scale": 2
+      },
+      {
+        "cpus": "0.5",
+        "mem": "16",
+        "cmd": "npm -v"
+      }
+    ]
+}
