@@ -17,8 +17,8 @@ import (
 )
 
 var (
-	BUILD_CPU float64 = 0.5
-	BUILD_MEM float64 = 128
+	BuildCPU float64 = 0.5
+	BuildMem float64 = 128
 )
 
 func (core *Core) StartJob(job *registry.Job) error {
@@ -27,6 +27,7 @@ func (core *Core) StartJob(job *registry.Job) error {
 		return errors.New("Start job error: image, context_dir cannot be nil at the same time")
 	}
 
+	job.StartTime = time.Now().UnixNano()
 	if job.ContextDir != "" {
 		core.BuildImage(job)
 	}
@@ -45,8 +46,8 @@ func (core *Core) BuildImage(job *registry.Job) error {
 	job.Image = "image-" + job.ID
 	for index := 1; index <= job.BuildNodeNumber(); index++ {
 		task := &registry.Task{
-			Cpus:       BUILD_CPU,
-			Mem:        BUILD_MEM,
+			Cpus:       BuildCPU,
+			Mem:        BuildMem,
 			ID:         "build-" + job.ID + "-" + strconv.Itoa(index),
 			Name:       job.Name,
 			Type:       registry.TaskTypeBuild,
@@ -72,10 +73,28 @@ func (core *Core) BuildImage(job *registry.Job) error {
 func (core *Core) RunTask(job *registry.Job) {
 	// Run test task of specified job
 	// TaskID: test-{JobID}-{randID}-{scaleNumber}
+	var arguments []string
+	if job.Splitter != nil && job.InputPath != "" {
+		arguments, err := job.Splitter.Split(job.InputPath)
+		log.Warn(arguments)
+		if err != nil {
+			log.Errorf("Error when split job: %v", err)
+			return
+		}
+
+		jobScale := len(arguments)
+		core.addTask(job, jobScale, arguments)
+		return
+	}
+
+	core.addTask(job, 0, arguments)
+}
+
+func (core *Core) addTask(job *registry.Job, scale int, arguments []string) {
 	for _, task := range job.Tasks {
 		randID, err := utils.Encode(6)
 		if err != nil {
-			log.Errorf("Error when generate id to task %d of job %v", task.ID, job.ID)
+			log.Errorf("Error when generate id to task %s of job %v", task.ID, job.ID)
 			continue
 		}
 
@@ -83,7 +102,11 @@ func (core *Core) RunTask(job *registry.Job) {
 			task.Scale = 1
 		}
 
-		for index := 1; index <= task.Scale; index++ {
+		if scale == 0 {
+			scale = task.Scale
+		}
+
+		for index := 1; index <= scale; index++ {
 			// To avoid use same pointer of ports
 			// Instantiate a new array
 			var ports []*registry.Port
@@ -121,6 +144,17 @@ func (core *Core) RunTask(job *registry.Job) {
 					},
 				})
 			}
+
+			// TODO bugfix: task point to one pointer
+			var taskArguments []string
+			for _, arg := range task.Arguments {
+				taskArguments = append(taskArguments, arg)
+			}
+			if len(arguments) > 0 {
+				taskArguments = append(taskArguments, arguments[index-1])
+				taskArguments = append(taskArguments, job.OutputPath)
+			}
+			taskInstance.Arguments = taskArguments
 
 			err = core.AddTask(taskInstance.ID, taskInstance)
 			job.PushTask(taskInstance)
@@ -251,7 +285,7 @@ func (core *Core) CreateBuildImageTaskInfo(offer *mesosproto.Offer, resources []
 	}
 
 	contextServePath := "http://" + core.GetAddr() + "/context/" + job.Dockerfile.ID + ".tar"
-	executorServePath := "http://" + core.GetAddr() + "/executor/image_builder"
+	executorServePath := "http://" + core.GetAddr() + "/executor/builder/image_builder"
 	log.Debugf("Context file served on path: %v", contextServePath)
 
 	executorUris := []*mesosproto.CommandInfo_URI{
@@ -280,5 +314,69 @@ func (core *Core) CreateBuildImageTaskInfo(offer *mesosproto.Offer, resources []
 			Value: proto.String(task.ID),
 		},
 		Data: []byte(contextServePath),
+	}, nil
+}
+
+func (core *Core) CreateTaskRunnerInfo(offer *mesosproto.Offer, resources []*mesosproto.Resource, task *registry.Task) (*mesosproto.TaskInfo, error) {
+	log.Debugf("Create task-runner taskInfo of task(%v)", task.ID)
+
+	executorServePath := "http://" + core.GetAddr() + "/executor/runner/task_runner"
+
+	executorUris := []*mesosproto.CommandInfo_URI{
+		{
+			Value:      &executorServePath,
+			Executable: proto.Bool(true),
+		},
+	}
+
+	// Set the docker image if specified
+	dockerInfo := &mesosproto.ContainerInfo_DockerInfo{
+		Image: &task.DockerImage,
+	}
+
+	containerInfo := &mesosproto.ContainerInfo{
+		Type:   mesosproto.ContainerInfo_DOCKER.Enum(),
+		Docker: dockerInfo,
+	}
+
+	mode := mesosproto.Volume_RO
+	containerInfo.Volumes = append(containerInfo.Volumes, &mesosproto.Volume{
+		ContainerPath: proto.String("/task_runner"),
+		HostPath:      proto.String("./task_runner"),
+		Mode:          &mode,
+	})
+
+	commandInfo := &mesosproto.CommandInfo{
+		Shell: proto.Bool(false),
+	}
+	if len(task.Arguments) > 0 {
+		for _, argument := range task.Arguments {
+			commandInfo.Arguments = append(commandInfo.Arguments, argument)
+		}
+	}
+
+	executorInfo := &mesosproto.ExecutorInfo{
+		ExecutorId: &mesosproto.ExecutorID{
+			Value: proto.String(task.ID),
+		},
+		Name: proto.String("Run Task (APT-MESOS)"),
+		Command: &mesosproto.CommandInfo{
+			Uris:  executorUris,
+			Value: proto.String("/task_runner"),
+		},
+		// Command:   commandInfo,
+		Container: containerInfo,
+	}
+
+	return &mesosproto.TaskInfo{
+		Executor:  executorInfo,
+		Name:      proto.String("task-" + task.JobID),
+		Resources: resources,
+		SlaveId:   offer.SlaveId,
+		TaskId: &mesosproto.TaskID{
+			Value: proto.String(task.ID),
+		},
+		Container: containerInfo,
+		Data:      []byte("file1"),
 	}, nil
 }
