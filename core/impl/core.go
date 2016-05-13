@@ -238,7 +238,7 @@ func (core *Core) LaunchTask(task *registry.Task, offer *mesosproto.Offer, offer
 	taskInfo := &mesosproto.TaskInfo{}
 	var err error
 	if task.Type == registry.TaskTypeTest {
-		taskInfo, err = core.CreateTaskRunnerInfo(offer, resources, task)
+		taskInfo, err = core.CreateSingleTaskInfo(offer, resources, task)
 		log.Debug(taskInfo)
 	} else if task.Type == registry.TaskTypeBuild {
 		taskInfo, err = core.CreateBuildImageTaskInfo(offer, resources, task)
