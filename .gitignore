@@ -34,6 +34,6 @@ test.sh
 test-debug.sh
 coverage.out
 executor/image_builder
-scripts
+./scripts
 drf.sh
 fcfs.sh
