@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	MfsRoot = "/mnt/mfsmount"
+	MfsRoot = "/mnt/mfs"
 )
 
 type MfsFileExplorer struct {
