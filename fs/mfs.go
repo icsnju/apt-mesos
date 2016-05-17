@@ -23,7 +23,7 @@ func NewMfsFileExplorer() *MfsFileExplorer {
 	return &MfsFileExplorer{}
 }
 
-func normalizePath(path string) string {
+func NormalizePath(path string) string {
 	if !strings.HasPrefix(path, "/") {
 		return MfsRoot + "/" + path
 	}
@@ -31,11 +31,11 @@ func normalizePath(path string) string {
 }
 
 func (fe *MfsFileExplorer) Mkdir(newPath string) error {
-	return os.Mkdir(normalizePath(newPath), os.ModePerm)
+	return os.Mkdir(NormalizePath(newPath), os.ModePerm)
 }
 
 func (fe *MfsFileExplorer) Cat(path string) (string, error) {
-	fi, err := os.Open(normalizePath(path))
+	fi, err := os.Open(NormalizePath(path))
 	if err != nil {
 		return "", err
 	}
@@ -57,7 +57,7 @@ func (fe *MfsFileExplorer) Cat(path string) (string, error) {
 }
 
 func (fe *MfsFileExplorer) Write(path, content string) error {
-	fo, err := os.Create(normalizePath(path))
+	fo, err := os.Create(NormalizePath(path))
 	if err != nil {
 		return err
 	}
@@ -67,7 +67,7 @@ func (fe *MfsFileExplorer) Write(path, content string) error {
 }
 
 func (fe *MfsFileExplorer) ListDir(path string) ([]ListDirEntry, error) {
-	directory, err := os.Open(normalizePath(path))
+	directory, err := os.Open(NormalizePath(path))
 	if err != nil {
 		return nil, err
 	}
@@ -101,13 +101,13 @@ func (fe *MfsFileExplorer) Move(path string, newPath string) error {
 	if err != nil {
 		return err
 	}
-	err = os.RemoveAll(normalizePath(path))
+	err = os.RemoveAll(NormalizePath(path))
 	return err
 }
 
 func (fe *MfsFileExplorer) Copy(path string, newPath string) error {
-	path = normalizePath(path)
-	newPath = normalizePath(newPath)
+	path = NormalizePath(path)
+	newPath = NormalizePath(newPath)
 	fi, err := os.Stat(path)
 	if err != nil {
 		return err
@@ -119,7 +119,7 @@ func (fe *MfsFileExplorer) Copy(path string, newPath string) error {
 }
 
 func (fe *MfsFileExplorer) Download(path string) ([]byte, error) {
-	fi, err := os.Open(normalizePath(path))
+	fi, err := os.Open(NormalizePath(path))
 	defer fi.Close()
 	if err != nil {
 		return nil, err
@@ -138,7 +138,7 @@ func (fe *MfsFileExplorer) Upload(path string, file *multipart.FileHeader) error
 		return err
 	}
 
-	fileNew := normalizePath(path + "/" + file.Filename)
+	fileNew := NormalizePath(path + "/" + file.Filename)
 	fo, err := os.OpenFile(fileNew, os.O_WRONLY|os.O_CREATE, 0777)
 	defer fo.Close()
 	if err != nil {
@@ -150,9 +150,9 @@ func (fe *MfsFileExplorer) Upload(path string, file *multipart.FileHeader) error
 }
 
 func (fe *MfsFileExplorer) Delete(path string) error {
-	return os.RemoveAll(normalizePath(path))
+	return os.RemoveAll(NormalizePath(path))
 }
 
 func (fe *MfsFileExplorer) Rename(oldPath, newPath string) error {
-	return os.Rename(normalizePath(oldPath), normalizePath(newPath))
+	return os.Rename(NormalizePath(oldPath), NormalizePath(newPath))
 }

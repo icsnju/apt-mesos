@@ -10,6 +10,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/gogo/protobuf/proto"
 	"github.com/icsnju/apt-mesos/docker"
+	"github.com/icsnju/apt-mesos/fs"
 	"github.com/icsnju/apt-mesos/mesosproto"
 	"github.com/icsnju/apt-mesos/registry"
 	"github.com/icsnju/apt-mesos/scheduler/impl/resource"
@@ -17,8 +18,10 @@ import (
 )
 
 var (
-	BuildCPU float64 = 0.5
-	BuildMem float64 = 128
+	BuildCPU   float64 = 0.5
+	BuildMem   float64 = 128
+	CollectCPU float64 = 0.1
+	CollectMem float64 = 16
 )
 
 func (core *Core) StartJob(job *registry.Job) error {
@@ -73,24 +76,24 @@ func (core *Core) BuildImage(job *registry.Job) error {
 func (core *Core) RunTask(job *registry.Job) {
 	// Run test task of specified job
 	// TaskID: test-{JobID}-{randID}-{scaleNumber}
-	var arguments []string
+	var inputs []string
 	if job.Splitter != nil && job.InputPath != "" {
-		arguments, err := job.Splitter.Split(job.InputPath)
-		log.Warn(arguments)
+		inputs, err := job.Splitter.Split(job.InputPath)
+		log.Warn(inputs)
 		if err != nil {
 			log.Errorf("Error when split job: %v", err)
 			return
 		}
 
-		jobScale := len(arguments)
-		core.addTask(job, jobScale, arguments)
+		jobScale := len(inputs)
+		core.addTask(job, jobScale, inputs)
 		return
 	}
 
-	core.addTask(job, 0, arguments)
+	core.addTask(job, 0, inputs)
 }
 
-func (core *Core) addTask(job *registry.Job, scale int, arguments []string) {
+func (core *Core) addTask(job *registry.Job, scale int, inputs []string) {
 	for _, task := range job.Tasks {
 		randID, err := utils.Encode(6)
 		if err != nil {
@@ -106,6 +109,7 @@ func (core *Core) addTask(job *registry.Job, scale int, arguments []string) {
 			scale = task.Scale
 		}
 
+		job.TotalTaskLen = scale
 		for index := 1; index <= scale; index++ {
 			// To avoid use same pointer of ports
 			// Instantiate a new array
@@ -127,12 +131,33 @@ func (core *Core) addTask(job *registry.Job, scale int, arguments []string) {
 				Disk:        task.Disk,
 				Ports:       ports,
 				Command:     task.Command,
+				Volumes:     task.Volumes,
 				Resources:   task.Resources,
 				Attributes:  task.Attributes,
 				CreateTime:  time.Now().UnixNano(),
 				Type:        registry.TaskTypeTest,
 				State:       "TASK_WAITING",
 			}
+
+			// mount input path
+			if len(inputs) > 0 {
+				taskInstance.Volumes = append(taskInstance.Volumes, &registry.Volume{
+					HostPath:      fs.NormalizePath(inputs[index-1]),
+					ContainerPath: "/input",
+				})
+			}
+
+			// mount work directory
+			taskInstance.Volumes = append(taskInstance.Volumes, &registry.Volume{
+				HostPath:      fs.NormalizePath(job.WorkDirectory),
+				ContainerPath: "/workspace",
+			})
+
+			// mount output
+			taskInstance.Volumes = append(taskInstance.Volumes, &registry.Volume{
+				HostPath:      fs.NormalizePath(job.OutputPath),
+				ContainerPath: "/output",
+			})
 
 			// if task was build from dockerfile
 			// add attribute to task
@@ -150,10 +175,6 @@ func (core *Core) addTask(job *registry.Job, scale int, arguments []string) {
 			for _, arg := range task.Arguments {
 				taskArguments = append(taskArguments, arg)
 			}
-			if len(arguments) > 0 {
-				taskArguments = append(taskArguments, arguments[index-1])
-				taskArguments = append(taskArguments, job.OutputPath)
-			}
 			taskInstance.Arguments = taskArguments
 
 			err = core.AddTask(taskInstance.ID, taskInstance)
@@ -165,6 +186,29 @@ func (core *Core) addTask(job *registry.Job, scale int, arguments []string) {
 				continue
 			}
 		}
+	}
+}
+
+// CollectResult collect result for task
+func (core *Core) CollectResult(job *registry.Job, task *registry.Task) {
+	taskInstance := &registry.Task{
+		Cpus:       CollectCPU,
+		Mem:        CollectMem,
+		ID:         "collect-" + job.ID + "-" + task.ID,
+		Name:       job.Name,
+		Type:       registry.TaskTypeBuild,
+		CreateTime: time.Now().UnixNano(),
+		JobID:      job.ID,
+		State:      "TASK_WAITING",
+		SLA:        registry.SLAOnePerNode,
+		Directory:  task.Directory,
+	}
+	err := core.AddTask(taskInstance.ID, taskInstance)
+	job.PushTask(taskInstance)
+	if err != nil {
+		log.Errorf("Error when add %d result collector: %v", err)
+		task.State = "TASK_FAILED"
+		job.PopLastTask()
 	}
 }
 
@@ -314,6 +358,46 @@ func (core *Core) CreateBuildImageTaskInfo(offer *mesosproto.Offer, resources []
 			Value: proto.String(task.ID),
 		},
 		Data: []byte(contextServePath),
+	}, nil
+}
+
+func (core *Core) CreateCollectResultTaskInfo(offer *mesosproto.Offer, resources []*mesosproto.Resource, task *registry.Task) (*mesosproto.TaskInfo, error) {
+	log.Debugf("Collect result taskInfo of task(%v)", task.ID)
+	job, err := core.GetJob(task.JobID)
+	if err != nil {
+		return nil, err
+	}
+
+	if !job.HasContextDir() {
+		return nil, errors.New("Context directory needed.")
+	}
+
+	executorServePath := "http://" + core.GetAddr() + "/executor/collector/result_collector"
+	executorUris := []*mesosproto.CommandInfo_URI{
+		{
+			Value:      &executorServePath,
+			Executable: proto.Bool(true),
+		},
+	}
+
+	executorInfo := &mesosproto.ExecutorInfo{
+		ExecutorId: &mesosproto.ExecutorID{
+			Value: proto.String(task.ID),
+		},
+		Name: proto.String("Collect Result (APT-MESOS)"),
+		Command: &mesosproto.CommandInfo{
+			Uris:  executorUris,
+			Value: proto.String("./result_collector " + task.ID + " " + task.Directory + " " + job.OutputPath),
+		},
+	}
+	return &mesosproto.TaskInfo{
+		Executor:  executorInfo,
+		Name:      proto.String("collect-" + task.JobID),
+		Resources: resources,
+		SlaveId:   offer.SlaveId,
+		TaskId: &mesosproto.TaskID{
+			Value: proto.String(task.ID),
+		},
 	}, nil
 }
 

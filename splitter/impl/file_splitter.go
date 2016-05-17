@@ -3,6 +3,8 @@ package impl
 import (
 	"io/ioutil"
 	"path"
+
+	"github.com/icsnju/apt-mesos/fs"
 )
 
 // FileSplitter splits input by file
@@ -17,10 +19,10 @@ func NewFileSplitter() *FileSplitter {
 // Split implements of FileSplitter
 // {Input}: a directory
 // return an array of files in the input
-func (fs *FileSplitter) Split(input string) ([]string, error) {
+func (f *FileSplitter) Split(input string) ([]string, error) {
 	var files []string
 
-	dir, err := ioutil.ReadDir(input)
+	dir, err := ioutil.ReadDir(fs.NormalizePath(input))
 	if err != nil {
 		return nil, err
 	}
