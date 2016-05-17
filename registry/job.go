@@ -35,10 +35,11 @@ type Job struct {
 	FinishTime int64 `json:"finish_time"`
 
 	// Splitter
-	SplitterType string `json:"splitter_type"`
-	Splitter     splitter.Splitter
-	InputPath    string `json:"input_path"`
-	OutputPath   string `json:"output_path"`
+	SplitterType  string `json:"splitter_type"`
+	Splitter      splitter.Splitter
+	InputPath     string `json:"input_path"`
+	OutputPath    string `json:"output_path"`
+	WorkDirectory string `json:"work_directory"`
 
 	// Job monitoring
 	Health string `json:"health"`

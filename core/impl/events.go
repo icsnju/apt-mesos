@@ -71,6 +71,11 @@ func (core *Core) AddEvent(eventType mesosproto.Event_Type, event *mesosproto.Ev
 					job.Health = registry.UnHealthy
 				}
 			}
+		} else if updateStatus == "TASK_RUNNING" {
+			task, err := core.GetTask(event.GetUpdate().GetStatus().GetTaskId().GetValue())
+			if err != nil && task.StartTime == 0 {
+				task.StartTime = int64(event.GetUpdate().GetStatus().GetTimestamp())
+			}
 		}
 
 	}

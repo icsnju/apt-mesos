@@ -105,8 +105,8 @@ func (core *Core) taskHealthCheck(timeInterval time.Duration) {
 		taskTotal := 0
 		taskFailed := 0
 		for _, task := range core.GetAllTasks() {
-			if task.RunTime > time.Now().UnixNano()-int64(1*time.Minute) {
-				totalWaitTime += (task.RunTime - task.CreateTime)
+			if task.StartTime > time.Now().UnixNano()-int64(1*time.Minute) {
+				totalWaitTime += (task.StartTime - task.CreateTime)
 				taskCount++
 			}
 			if task.State != "TASK_RUNNING" && task.State != "TASK_STAGING" && task.State != "TASK_WAITING" {
