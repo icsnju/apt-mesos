@@ -63,6 +63,7 @@ type Task struct {
 	Directory     string `json:"directory"`
 	CreateTime    int64  `json:"create_time"`
 	StartTime     int64  `json:"start_time"`
+	FinishTime    int64  `json:"finish_time"`
 
 	TaskInfo *mesosproto.TaskInfo
 	Type     TaskType `enum=TaskType,json:"type,omitempty"`

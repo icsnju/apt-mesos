@@ -42,6 +42,11 @@ func (core *Core) AddEvent(eventType mesosproto.Event_Type, event *mesosproto.Ev
 		updateStatus := event.GetUpdate().GetStatus().GetState().String()
 		if updateStatus == "TASK_FINISHED" {
 			task, err := core.GetTask(event.GetUpdate().GetStatus().GetTaskId().GetValue())
+			task.FinishTime = int64(event.GetUpdate().GetStatus().GetTimestamp())
+			// Bundle: tester
+			core.Tester.AddTask(task)
+			// Bundle: end
+
 			log.Debugf("Task %v finished", task.ID)
 
 			// if task has jobID and is a build task
@@ -72,9 +77,17 @@ func (core *Core) AddEvent(eventType mesosproto.Event_Type, event *mesosproto.Ev
 				}
 			}
 		} else if updateStatus == "TASK_RUNNING" {
+			timestamp := int64(event.GetUpdate().GetStatus().GetTimestamp())
 			task, err := core.GetTask(event.GetUpdate().GetStatus().GetTaskId().GetValue())
-			if err != nil && task.StartTime == 0 {
-				task.StartTime = int64(event.GetUpdate().GetStatus().GetTimestamp())
+			if err == nil && task.StartTime == 0 {
+				task.StartTime = timestamp
+			}
+			job, err := core.GetJob(task.JobID)
+			if err == nil && job.StartTime == 0 {
+				job.StartTime = timestamp
+				// Bundle: tester
+				core.Tester.AddJob(job)
+				// Bundle: end
 			}
 		}
 

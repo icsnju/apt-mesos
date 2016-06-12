@@ -41,6 +41,8 @@ type Job struct {
 	OutputPath    string `json:"output_path"`
 	WorkDirectory string `json:"work_directory"`
 
+	DominantShare float64 `json:"dominant_share"`
+
 	// Job monitoring
 	Health string `json:"health"`
 	Status string `json:"status"`
@@ -73,7 +75,7 @@ func (job *Job) InitBasicParams() error {
 		return err
 	}
 	job.ID = randID
-	job.CreateTime = time.Now().UnixNano()
+	job.CreateTime = time.Now().Unix()
 	job.SLAOffers = make(map[string]string)
 	job.UsedResources = make(map[string]*mesosproto.Resource)
 	job.Health = Healthy

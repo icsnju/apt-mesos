@@ -1,18 +1,17 @@
 {
-    "image": "busybox",
-    "name": "test-case-3",
+    "image": "alexwhen/docker-2048",
+    "name": "2048",
     "tasks": [
       {
-        "cpus": "0.5",
-        "mem": "16",
-        "cmd": "ls",
-        "scale": 2
-      },
-      {
-        "cpus": "0.5",
-        "mem": "16",
-        "cmd": "ls /usr",
-        "scale": 2
+        "cpus": 0.1,
+        "mem": 16,
+        "scale": 5,
+        "port_mappings": [
+          {
+            "host_port": 0,
+            "container_port": 80
+          }
+        ]
       }
     ]
 }

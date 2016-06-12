@@ -30,7 +30,6 @@ func (core *Core) StartJob(job *registry.Job) error {
 		return errors.New("Start job error: image, context_dir cannot be nil at the same time")
 	}
 
-	job.StartTime = time.Now().UnixNano()
 	if job.ContextDir != "" {
 		core.BuildImage(job)
 	}
@@ -54,7 +53,7 @@ func (core *Core) BuildImage(job *registry.Job) error {
 			ID:         "build-" + job.ID + "-" + strconv.Itoa(index),
 			Name:       job.Name,
 			Type:       registry.TaskTypeBuild,
-			CreateTime: time.Now().UnixNano(),
+			CreateTime: time.Now().Unix(),
 			JobID:      job.ID,
 			State:      "TASK_WAITING",
 			SLA:        registry.SLAOnePerNode,
@@ -134,7 +133,7 @@ func (core *Core) addTask(job *registry.Job, scale int, inputs []string) {
 				Volumes:     task.Volumes,
 				Resources:   task.Resources,
 				Attributes:  task.Attributes,
-				CreateTime:  time.Now().UnixNano(),
+				CreateTime:  time.Now().Unix(),
 				Type:        registry.TaskTypeTest,
 				State:       "TASK_WAITING",
 			}
@@ -197,7 +196,7 @@ func (core *Core) CollectResult(job *registry.Job, task *registry.Task) {
 		ID:         "collect-" + job.ID + "-" + task.ID,
 		Name:       job.Name,
 		Type:       registry.TaskTypeBuild,
-		CreateTime: time.Now().UnixNano(),
+		CreateTime: time.Now().Unix(),
 		JobID:      job.ID,
 		State:      "TASK_WAITING",
 		SLA:        registry.SLAOnePerNode,

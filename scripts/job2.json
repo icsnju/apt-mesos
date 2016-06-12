@@ -1,17 +1,15 @@
 {
-    "image": "busybox",
-    "name": "test-case-2",
+    "image": "haitch/python-opencv",
+    "name": "test",
+    "work_directory": "/opencv",
+    "input_path": "/opencv/feature",
+    "output_path": "/opencv/output",
+    "splitter_type": "file_splitter",
     "tasks": [
       {
-        "cpus": "0.5",
-        "mem": "16",
-        "cmd": "ls",
-        "scale": 1
-      },
-      {
-        "cpus": "0.5",
-        "mem": "16",
-        "cmd": "ls /usr",
+        "cpus": 2,
+        "mem": 256,
+        "cmd": "python /workspace/DarkChannelRecover.py /input /output/output.png",
         "scale": 2
       }
     ]

@@ -47,4 +47,8 @@ type Core interface {
 	GetSystemUsage() *registry.Metrics
 	GetSystemMetric() *registry.SystemMetric
 	MergePorts(ports []*registry.Port) *mesosproto.Resource
+
+	// Bundle: tester
+	Test() *registry.Tester
+	// Bundle: tester
 }

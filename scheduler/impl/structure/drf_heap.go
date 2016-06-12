@@ -1,6 +1,10 @@
 package structure
 
-import "github.com/icsnju/apt-mesos/registry"
+import (
+	"fmt"
+
+	"github.com/icsnju/apt-mesos/registry"
+)
 
 type DRFElement struct {
 	DominantResource *DominantResource
@@ -59,6 +63,8 @@ func NewDRFElement(job *registry.Job, totalResource map[string]float64) *DRFElem
 			}
 		}
 	}
+	job.DominantShare = dr.Share
+	fmt.Println(dr.Share)
 	return &DRFElement{
 		DominantResource: dr,
 		Job:              job,

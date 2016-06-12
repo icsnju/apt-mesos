@@ -72,7 +72,15 @@ func (core *Core) metricMonitor() {
 		// Fetch agent data and update
 		core.updateNodesByCAdvisor()
 		core.updateTasksByCAdvisor()
-		time.Sleep(500 * time.Millisecond)
+
+		// Bundle: tester
+		metric := core.GetSystemUsage()
+		if metric.UsedCpus > 0 {
+			core.Tester.AddMetric(metric)
+		}
+		// Bundle: end
+
+		time.Sleep(1000 * time.Millisecond)
 	}
 }
 
@@ -83,7 +91,7 @@ func (core *Core) addFailureMetric(value float32) {
 	core.metric.FailureRate = core.metric.FailureRate[1:]
 	core.metric.FailureRate = append(core.metric.FailureRate, registry.SystemMetricItem{
 		Value:     value,
-		Timestamp: time.Now().UnixNano(),
+		Timestamp: time.Now().Unix(),
 	})
 }
 
@@ -94,7 +102,7 @@ func (core *Core) addWaittimeMetric(value float32) {
 	core.metric.WaitTime = core.metric.WaitTime[1:]
 	core.metric.WaitTime = append(core.metric.WaitTime, registry.SystemMetricItem{
 		Value:     value,
-		Timestamp: time.Now().UnixNano(),
+		Timestamp: time.Now().Unix(),
 	})
 }
 
@@ -105,7 +113,7 @@ func (core *Core) taskHealthCheck(timeInterval time.Duration) {
 		taskTotal := 0
 		taskFailed := 0
 		for _, task := range core.GetAllTasks() {
-			if task.StartTime > time.Now().UnixNano()-int64(1*time.Minute) {
+			if task.StartTime > time.Now().Unix()-60 {
 				totalWaitTime += (task.StartTime - task.CreateTime)
 				taskCount++
 			}

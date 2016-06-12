@@ -31,6 +31,7 @@ type Core struct {
 	offers        []*mesosproto.Offer
 	scheduler     scheduler.Scheduler
 	metric        registry.SystemMetric
+	Tester        registry.Tester
 
 	Endpoints map[string]map[string]func(w http.ResponseWriter, r *http.Request) error
 }
@@ -55,6 +56,7 @@ func NewCore(addr string, master string, scheduler scheduler.Scheduler) *Core {
 		jobs:          *registry.NewRegistry(),
 		scheduler:     scheduler,
 		Endpoints:     nil,
+		Tester:        *registry.NewTester(),
 	}
 	return core
 }
@@ -112,6 +114,13 @@ func (core *Core) Run() error {
 	return nil
 }
 
+// Bundle: tester
+func (core *Core) Test() *registry.Tester {
+	return &core.Tester
+}
+
+// Bundle: tester
+
 func (core *Core) schedule() {
 	for {
 		if core.scheduler.CheckFinished(); core.scheduler.HasJob() {
@@ -131,7 +140,7 @@ func (core *Core) schedule() {
 				core.updateNodeByTask(offer.GetSlaveId().GetValue(), task)
 				core.updateJobByTask(task.JobID, task)
 			} else {
-				log.Infof("No enough resources remained, wait for other tasks finish")
+				log.Debugf("No enough resources remained, wait for other tasks finish")
 				time.Sleep(3 * time.Second)
 			}
 		} else {

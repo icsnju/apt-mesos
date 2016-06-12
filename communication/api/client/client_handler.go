@@ -64,7 +64,7 @@ func (h *Handler) AddTask() martini.Handler {
 		}
 
 		task.ID = "task-" + randID
-		task.CreateTime = time.Now().UnixNano()
+		task.CreateTime = time.Now().Unix()
 		task.State = "TASK_WAITING"
 		log.Debugf("Receive task: %v", task)
 
@@ -248,5 +248,13 @@ func (h *Handler) SystemMetric() martini.Handler {
 		metric := h.core.GetSystemMetric()
 
 		writeResponse(w, http.StatusOK, metric)
+	}
+}
+
+// GetTester return test result
+func (h *Handler) GetTester() martini.Handler {
+	return func(w http.ResponseWriter, r *http.Request, params martini.Params) {
+
+		writeResponse(w, http.StatusOK, h.core.Test())
 	}
 }
