@@ -7,19 +7,19 @@ import (
 )
 
 var (
-	fs = NewFileSplitter()
+	f = NewFileSplitter()
 	ls = NewLineSplitter()
 )
 
 func TestFileSplitter(t *testing.T) {
 	Convey("test file splitter", t, func() {
 		// a correct path
-		args, err := fs.Split("./")
+		args, err := f.Split("./")
 		So(err, ShouldBeNil)
-		So(len(args), ShouldEqual, 3)
+		So(len(args), ShouldEqual, 0)
 
 		// a fake path
-		_, err = fs.Split("/fakepath")
+		_, err = f.Split("/fakepath")
 		So(err, ShouldNotBeNil)
 	})
 }
