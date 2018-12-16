@@ -37,3 +37,4 @@ executor/image_builder
 ./scripts
 drf.sh
 fcfs.sh
+.idea
