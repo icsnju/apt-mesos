@@ -214,14 +214,18 @@ func (core *Core) updateTasksByCAdvisor() {
 			var memoryStats []*registry.Usage
 			for _, containerInfo := range containerInfo {
 				for _, containerStats := range containerInfo.Stats {
-					cpuStats = append(cpuStats, &registry.Usage{
-						Total:     containerStats.Cpu.Usage.Total,
-						Timestamp: containerStats.Timestamp,
-					})
-					memoryStats = append(memoryStats, &registry.Usage{
-						Total:     containerStats.Memory.Usage,
-						Timestamp: containerStats.Timestamp,
-					})
+					if containerStats.Cpu != nil {
+						cpuStats = append(cpuStats, &registry.Usage{
+							Total:     containerStats.Cpu.Usage.Total,
+							Timestamp: containerStats.Timestamp,
+						})
+					}
+					if containerStats.Memory != nil {
+						memoryStats = append(memoryStats, &registry.Usage{
+							Total:     containerStats.Memory.Usage,
+							Timestamp: containerStats.Timestamp,
+						})
+					}
 				}
 			}
 			task.CPUUsage = cpuStats

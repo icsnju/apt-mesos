@@ -146,9 +146,13 @@ func (core *Core) updateNodesByCAdvisor() {
 					currentStats := info.Stats[len(info.Stats)-1]
 
 					// ms -> ns.
-					timeInterval := float64((currentStats.Timestamp.Unix() - lastStats.Timestamp.Unix()) * 1000000)
-					node.CPUUsage = float64(currentStats.Cpu.Usage.Total-lastStats.Cpu.Usage.Total) / timeInterval
-					node.MemoryUsage = currentStats.Memory.Usage
+					if currentStats.Cpu != nil {
+						timeInterval := float64((currentStats.Timestamp.Unix() - lastStats.Timestamp.Unix()) * 1000000)
+						node.CPUUsage = float64(currentStats.Cpu.Usage.Total-lastStats.Cpu.Usage.Total) / timeInterval
+					}
+					if currentStats.Memory != nil {
+						node.MemoryUsage = currentStats.Memory.Usage
+					}
 					node.LastUpdateTime = time.Now().Unix()
 				}
 			}
